@@ -233,10 +233,9 @@ class CraftingApp(tk.Tk):
         base_panel.rowconfigure(1, weight=1)
 
         self.base_filter_var = tk.StringVar()
-        self.base_filter_var.trace_add("write", lambda *_: self._apply_base_filter())
         search = ttk.Entry(base_panel, textvariable=self.base_filter_var, style="PoE.TEntry")
         search.grid(row=0, column=0, sticky="ew", padx=6, pady=6)
-        search.insert(0, "Search name, class:Claw, tag:caster, influence:shaper…")
+        self.base_filter_var.set("Search name, class:Claw, tag:caster, influence:shaper…")
         search.bind("<FocusIn>", lambda event: self._clear_placeholder(event, self.base_filter_var))
 
         self.base_list = tk.Listbox(
@@ -267,6 +266,8 @@ class CraftingApp(tk.Tk):
 
         self.base_count = ttk.Label(base_panel, text="0 bases", style="PoE.Subtle.TLabel")
         self.base_count.grid(row=2, column=0, sticky="w", padx=6, pady=(0, 6))
+
+        self.base_filter_var.trace_add("write", lambda *_: self._apply_base_filter())
 
     def _build_selection_panel(self, parent: ttk.Frame) -> None:
         selection_panel = ttk.Labelframe(parent, text="Details & Picks", style="PoE.TLabelframe")
@@ -369,10 +370,9 @@ class CraftingApp(tk.Tk):
         top_row.columnconfigure(0, weight=1)
 
         self.affix_filter_var = tk.StringVar()
-        self.affix_filter_var.trace_add("write", lambda *_: self._refresh_affixes())
         affix_search = ttk.Entry(top_row, textvariable=self.affix_filter_var, style="PoE.TEntry")
         affix_search.grid(row=0, column=0, sticky="ew")
-        affix_search.insert(0, "Search affixes, add type:prefix or method:essence…")
+        self.affix_filter_var.set("Search affixes, add type:prefix or method:essence…")
         affix_search.bind("<FocusIn>", lambda event: self._clear_placeholder(event, self.affix_filter_var))
 
         self.compatible_only = tk.BooleanVar(value=True)
@@ -452,6 +452,8 @@ class CraftingApp(tk.Tk):
             borderwidth=0,
         )
         self.affix_details.grid(row=4, column=0, columnspan=2, sticky="nsew", padx=6, pady=(0, 6))
+
+        self.affix_filter_var.trace_add("write", lambda *_: self._refresh_affixes())
 
     def _build_plan_panel(self, parent: ttk.Frame) -> None:
         plan_panel = ttk.Labelframe(parent, text="Crafting Plan", style="PoE.TLabelframe")
