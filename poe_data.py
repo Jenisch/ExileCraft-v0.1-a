@@ -11,6 +11,78 @@ ROOT = Path(__file__).parent
 SAMPLE_DATA_PATH = ROOT / "data" / "affixes.json"
 REPOE_DATA_DIR = ROOT / "data" / "repoe"
 
+RELEVANT_CLASS_KEYWORDS = (
+    "armour",
+    "armor",
+    "helmet",
+    "helm",
+    "glove",
+    "boot",
+    "shield",
+    "buckler",
+    "kite",
+    "tower",
+    "weapon",
+    "axe",
+    "bow",
+    "claw",
+    "dagger",
+    "rapier",
+    "sword",
+    "sabre",
+    "blade",
+    "sceptre",
+    "scepter",
+    "mace",
+    "hammer",
+    "staff",
+    "warstaff",
+    "polearm",
+    "spear",
+    "wand",
+    "jewellery",
+    "jewelry",
+    "amulet",
+    "ring",
+    "belt",
+    "talisman",
+    "quiver",
+    "focus",
+)
+
+RELEVANT_TAGS = {
+    "armour",
+    "armor",
+    "helmet",
+    "helm",
+    "gloves",
+    "boots",
+    "shield",
+    "weapon",
+    "two_hand_weapon",
+    "one_hand_weapon",
+    "bow",
+    "claw",
+    "dagger",
+    "mace",
+    "staff",
+    "sword",
+    "wand",
+    "sceptre",
+    "axe",
+    "jewellery",
+    "jewelry",
+    "ring",
+    "amulet",
+    "belt",
+    "talisman",
+    "trinket",
+    "quiver",
+    "focus",
+    "offhand",
+    "off_hand",
+}
+
 
 @dataclass
 class BaseItem:
@@ -115,8 +187,9 @@ class CraftingDataset:
                 f"Crafting dataset missing at {self.sample_path}. Provide affixes.json to continue."
             )
         payload = json.loads(self.sample_path.read_text(encoding="utf8"))
-        self._bases = [BaseItem.from_dict(entry) for entry in payload.get("bases", [])]
-        self._affixes = [Affix.from_dict(entry) for entry in payload.get("affixes", [])]
+        bases = [BaseItem.from_dict(entry) for entry in payload.get("bases", [])]
+        affixes = [Affix.from_dict(entry) for entry in payload.get("affixes", [])]
+        self._assign_filtered_payload(bases, affixes)
 
     def _load_repoe(self) -> None:
         base_items_file = self.repo_dir / "base_items.min.json"
@@ -133,8 +206,7 @@ class CraftingDataset:
         bases, tag_lookup = self._convert_repoe_bases(base_payload)
         affixes = self._convert_repoe_affixes(mod_payload, tag_lookup)
 
-        self._bases = bases
-        self._affixes = affixes
+        self._assign_filtered_payload(bases, affixes)
 
     def _convert_repoe_bases(
         self, payload: Dict[str, dict]
@@ -218,6 +290,44 @@ class CraftingDataset:
 
         affixes.sort(key=lambda affix: (affix.type, affix.name))
         return affixes
+
+    def _assign_filtered_payload(
+        self, bases: Sequence[BaseItem], affixes: Sequence[Affix]
+    ) -> None:
+        filtered_bases = self._filter_relevant_bases(bases)
+        allowed_classes = {base.item_class for base in filtered_bases}
+        filtered_affixes = self._filter_relevant_affixes(affixes, allowed_classes)
+        self._bases = sorted(filtered_bases, key=lambda base: (base.item_class, base.name))
+        self._affixes = sorted(filtered_affixes, key=lambda affix: (affix.type, affix.name))
+
+    def _filter_relevant_bases(self, bases: Sequence[BaseItem]) -> List[BaseItem]:
+        filtered: List[BaseItem] = []
+        for base in bases:
+            if self._is_relevant_base(base):
+                filtered.append(base)
+        return filtered
+
+    def _filter_relevant_affixes(
+        self, affixes: Sequence[Affix], allowed_classes: Iterable[str]
+    ) -> List[Affix]:
+        allowed = set(allowed_classes)
+        filtered: List[Affix] = []
+        for affix in affixes:
+            if not affix.item_classes or "Universal" in affix.item_classes:
+                filtered.append(affix)
+                continue
+            if any(item_class in allowed for item_class in affix.item_classes):
+                filtered.append(affix)
+        return filtered
+
+    def _is_relevant_base(self, base: BaseItem) -> bool:
+        item_class = base.item_class.lower()
+        if any(keyword in item_class for keyword in RELEVANT_CLASS_KEYWORDS):
+            return True
+        tags = {tag.lower() for tag in base.tags}
+        if tags & RELEVANT_TAGS:
+            return True
+        return False
 
     def _infer_allowed_item_classes(
         self,

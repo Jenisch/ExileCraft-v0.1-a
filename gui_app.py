@@ -4,6 +4,7 @@ from __future__ import annotations
 import textwrap
 import tkinter as tk
 from tkinter import messagebox, ttk
+from tkinter import font as tkfont
 from typing import Dict, List, Optional
 
 from crafting_engine import CraftingEngine
@@ -18,6 +19,8 @@ class CraftingApp(tk.Tk):
         self.title("ExileCraft Planner")
         self.geometry("1280x800")
         self.minsize(1000, 700)
+        self.configure(bg="#0b0908")
+        self.palette = self._configure_theme()
 
         try:
             self.dataset = CraftingDataset(source=source)
@@ -48,22 +51,169 @@ class CraftingApp(tk.Tk):
             )
 
     # ------------------------------------------------------------------ layout
+    def _configure_theme(self) -> Dict[str, str]:
+        palette = {
+            "base": "#090707",
+            "surface": "#16100f",
+            "panel": "#211917",
+            "border": "#3a2c21",
+            "accent": "#d3a95c",
+            "accent_dark": "#a3742c",
+            "focus": "#2d1f17",
+            "text": "#f1e7d0",
+            "muted": "#9f8c6c",
+        }
+
+        heading_font = tkfont.Font(family="Georgia", size=22, weight="bold")
+        section_font = tkfont.Font(family="Georgia", size=11, weight="bold")
+
+        style = ttk.Style(self)
+        try:
+            style.theme_use("clam")
+        except tk.TclError:
+            pass
+
+        style.configure("PoE.TFrame", background=palette["surface"], borderwidth=0)
+        style.configure(
+            "PoE.TLabelframe",
+            background=palette["surface"],
+            bordercolor=palette["border"],
+            borderwidth=1,
+            relief="groove",
+            foreground=palette["accent"],
+        )
+        style.configure(
+            "PoE.TLabelframe.Label",
+            background=palette["surface"],
+            foreground=palette["accent"],
+            font=section_font,
+        )
+        style.configure(
+            "PoE.Heading.TLabel",
+            background=palette["base"],
+            foreground=palette["accent"],
+            font=heading_font,
+        )
+        style.configure(
+            "PoE.Section.TLabel",
+            background=palette["surface"],
+            foreground=palette["accent"],
+            font=section_font,
+        )
+        style.configure(
+            "PoE.Subtle.TLabel",
+            background=palette["surface"],
+            foreground=palette["muted"],
+            font=("Segoe UI", 10),
+        )
+        style.configure(
+            "PoE.TButton",
+            background=palette["panel"],
+            foreground=palette["text"],
+            padding=6,
+        )
+        style.map(
+            "PoE.TButton",
+            background=[("active", palette["accent"]), ("pressed", palette["accent_dark"])],
+            foreground=[("active", palette["base"]), ("pressed", palette["base"])],
+        )
+        style.configure(
+            "PoE.Treeview",
+            background=palette["panel"],
+            fieldbackground=palette["panel"],
+            foreground=palette["text"],
+            rowheight=24,
+            bordercolor=palette["border"],
+            borderwidth=1,
+        )
+        style.map(
+            "PoE.Treeview",
+            background=[("selected", palette["accent"])],
+            foreground=[("selected", palette["base"])],
+        )
+        style.configure(
+            "PoE.Treeview.Heading",
+            background=palette["border"],
+            foreground=palette["accent"],
+            relief="flat",
+            font=section_font,
+        )
+        style.map(
+            "PoE.Treeview.Heading",
+            background=[("active", palette["accent_dark"])],
+            foreground=[("active", palette["base"])],
+        )
+        style.configure(
+            "PoE.TCheckbutton",
+            background=palette["surface"],
+            foreground=palette["text"],
+        )
+        style.map(
+            "PoE.TCheckbutton",
+            background=[("active", palette["panel"])],
+            foreground=[("active", palette["accent"])],
+        )
+        style.configure(
+            "PoE.TEntry",
+            fieldbackground=palette["panel"],
+            background=palette["panel"],
+            foreground=palette["text"],
+            bordercolor=palette["border"],
+            borderwidth=1,
+        )
+        style.map(
+            "PoE.TEntry",
+            fieldbackground=[("focus", palette["focus"])],
+            foreground=[("disabled", palette["muted"])],
+        )
+        style.configure(
+            "PoE.Vertical.TScrollbar",
+            background=palette["panel"],
+            troughcolor=palette["surface"],
+            bordercolor=palette["border"],
+            lightcolor=palette["border"],
+            darkcolor=palette["border"],
+        )
+        style.configure(
+            "PoE.Horizontal.TScrollbar",
+            background=palette["panel"],
+            troughcolor=palette["surface"],
+            bordercolor=palette["border"],
+            lightcolor=palette["border"],
+            darkcolor=palette["border"],
+        )
+
+        default_font = tkfont.nametofont("TkDefaultFont")
+        default_font.configure(family="Segoe UI", size=10)
+        text_font = tkfont.nametofont("TkTextFont")
+        text_font.configure(family="Segoe UI", size=10)
+        self.heading_font = heading_font
+        self.section_font = section_font
+
+        self.option_add("*Listbox.background", palette["panel"])
+        self.option_add("*Listbox.foreground", palette["text"])
+        self.option_add("*Listbox.selectBackground", palette["accent"])
+        self.option_add("*Listbox.selectForeground", palette["base"])
+        self.option_add("*TCombobox*Listbox*Background", palette["panel"])
+        self.option_add("*TCombobox*Listbox*Foreground", palette["text"])
+
+        return palette
     def _build_layout(self) -> None:
         self.columnconfigure(0, weight=1)
         self.rowconfigure(0, weight=1)
         self.rowconfigure(1, weight=1)
 
-        header = ttk.Frame(self)
+        header = ttk.Frame(self, style="PoE.TFrame")
         header.grid(row=0, column=0, sticky="ew", padx=12, pady=(12, 6))
         header.columnconfigure(1, weight=1)
 
-        title = ttk.Label(header, text="ExileCraft Planner", font=("Segoe UI", 20, "bold"))
+        title = ttk.Label(header, text="ExileCraft Planner", style="PoE.Heading.TLabel")
         title.grid(row=0, column=0, sticky="w")
 
-        self.sample_hint = ttk.Label(header, foreground="#b58900", wraplength=700)
+        self.sample_hint = ttk.Label(header, style="PoE.Subtle.TLabel", wraplength=760)
         self.sample_hint.grid(row=1, column=0, columnspan=3, sticky="we", pady=(6, 0))
 
-        content = ttk.Frame(self)
+        content = ttk.Frame(self, style="PoE.TFrame")
         content.grid(row=1, column=0, sticky="nsew")
         content.columnconfigure(0, weight=1)
         content.columnconfigure(1, weight=1)
@@ -77,83 +227,150 @@ class CraftingApp(tk.Tk):
         self._build_plan_panel(content)
 
     def _build_base_panel(self, parent: ttk.Frame) -> None:
-        base_panel = ttk.Labelframe(parent, text="Item Bases")
+        base_panel = ttk.Labelframe(parent, text="Item Bases", style="PoE.TLabelframe")
         base_panel.grid(row=0, column=0, sticky="nsew", padx=(12, 6), pady=6)
         base_panel.columnconfigure(0, weight=1)
         base_panel.rowconfigure(1, weight=1)
 
         self.base_filter_var = tk.StringVar()
         self.base_filter_var.trace_add("write", lambda *_: self._apply_base_filter())
-        search = ttk.Entry(base_panel, textvariable=self.base_filter_var)
+        search = ttk.Entry(base_panel, textvariable=self.base_filter_var, style="PoE.TEntry")
         search.grid(row=0, column=0, sticky="ew", padx=6, pady=6)
         search.insert(0, "Search name, class:Claw, tag:caster, influence:shaper…")
         search.bind("<FocusIn>", lambda event: self._clear_placeholder(event, self.base_filter_var))
 
-        self.base_list = tk.Listbox(base_panel, exportselection=False)
+        self.base_list = tk.Listbox(
+            base_panel,
+            exportselection=False,
+            bg=self.palette["panel"],
+            fg=self.palette["text"],
+            selectbackground=self.palette["accent"],
+            selectforeground=self.palette["base"],
+            highlightbackground=self.palette["border"],
+            highlightcolor=self.palette["accent"],
+            relief="flat",
+            activestyle="none",
+            font=("Segoe UI", 10),
+            borderwidth=0,
+        )
         self.base_list.grid(row=1, column=0, sticky="nsew", padx=6, pady=(0, 6))
         self.base_list.bind("<<ListboxSelect>>", self._on_base_select)
 
-        scrollbar = ttk.Scrollbar(base_panel, orient="vertical", command=self.base_list.yview)
+        scrollbar = ttk.Scrollbar(
+            base_panel,
+            orient="vertical",
+            command=self.base_list.yview,
+            style="PoE.Vertical.TScrollbar",
+        )
         scrollbar.grid(row=1, column=1, sticky="ns", pady=(0, 6))
         self.base_list.configure(yscrollcommand=scrollbar.set)
 
-        self.base_count = ttk.Label(base_panel, text="0 bases")
+        self.base_count = ttk.Label(base_panel, text="0 bases", style="PoE.Subtle.TLabel")
         self.base_count.grid(row=2, column=0, sticky="w", padx=6, pady=(0, 6))
 
     def _build_selection_panel(self, parent: ttk.Frame) -> None:
-        selection_panel = ttk.Labelframe(parent, text="Details & Picks")
+        selection_panel = ttk.Labelframe(parent, text="Details & Picks", style="PoE.TLabelframe")
         selection_panel.grid(row=0, column=1, sticky="nsew", padx=6, pady=6)
         selection_panel.columnconfigure(0, weight=1)
         selection_panel.rowconfigure(0, weight=2)
         selection_panel.rowconfigure(1, weight=1)
         selection_panel.rowconfigure(2, weight=1)
 
-        self.base_details = tk.Text(selection_panel, height=12, wrap="word", state="disabled", bg="#1e1e1e", fg="#f0f0f0")
+        self.base_details = tk.Text(
+            selection_panel,
+            height=12,
+            wrap="word",
+            state="disabled",
+            bg=self.palette["panel"],
+            fg=self.palette["text"],
+            relief="flat",
+            highlightbackground=self.palette["border"],
+            highlightcolor=self.palette["accent"],
+            insertbackground=self.palette["text"],
+            font=("Segoe UI", 10),
+            borderwidth=0,
+        )
         self.base_details.grid(row=0, column=0, sticky="nsew", padx=6, pady=6)
 
-        picks = ttk.Frame(selection_panel)
+        picks = ttk.Frame(selection_panel, style="PoE.TFrame")
         picks.grid(row=1, column=0, sticky="nsew", padx=6, pady=(0, 6))
         picks.columnconfigure(0, weight=1)
         picks.columnconfigure(1, weight=1)
         picks.rowconfigure(1, weight=1)
 
-        ttk.Label(picks, text="Chosen Prefixes").grid(row=0, column=0, sticky="w")
-        ttk.Label(picks, text="Chosen Suffixes").grid(row=0, column=1, sticky="w")
+        ttk.Label(picks, text="Chosen Prefixes", style="PoE.Section.TLabel").grid(
+            row=0, column=0, sticky="w"
+        )
+        ttk.Label(picks, text="Chosen Suffixes", style="PoE.Section.TLabel").grid(
+            row=0, column=1, sticky="w"
+        )
 
-        self.prefix_list = tk.Listbox(picks, exportselection=False)
+        self.prefix_list = tk.Listbox(
+            picks,
+            exportselection=False,
+            bg=self.palette["panel"],
+            fg=self.palette["text"],
+            selectbackground=self.palette["accent"],
+            selectforeground=self.palette["base"],
+            highlightbackground=self.palette["border"],
+            highlightcolor=self.palette["accent"],
+            relief="flat",
+            activestyle="none",
+            font=("Segoe UI", 10),
+            borderwidth=0,
+        )
         self.prefix_list.grid(row=1, column=0, sticky="nsew", padx=(0, 3))
-        self.suffix_list = tk.Listbox(picks, exportselection=False)
+        self.suffix_list = tk.Listbox(
+            picks,
+            exportselection=False,
+            bg=self.palette["panel"],
+            fg=self.palette["text"],
+            selectbackground=self.palette["accent"],
+            selectforeground=self.palette["base"],
+            highlightbackground=self.palette["border"],
+            highlightcolor=self.palette["accent"],
+            relief="flat",
+            activestyle="none",
+            font=("Segoe UI", 10),
+            borderwidth=0,
+        )
         self.suffix_list.grid(row=1, column=1, sticky="nsew", padx=(3, 0))
 
-        button_row = ttk.Frame(selection_panel)
+        button_row = ttk.Frame(selection_panel, style="PoE.TFrame")
         button_row.grid(row=2, column=0, sticky="ew", padx=6, pady=(0, 6))
         button_row.columnconfigure(0, weight=1)
         button_row.columnconfigure(1, weight=1)
         button_row.columnconfigure(2, weight=1)
 
-        ttk.Button(button_row, text="Remove Prefix", command=self._remove_prefix).grid(
+        ttk.Button(
+            button_row, text="Remove Prefix", command=self._remove_prefix, style="PoE.TButton"
+        ).grid(
             row=0, column=0, sticky="ew", padx=(0, 3)
         )
-        ttk.Button(button_row, text="Remove Suffix", command=self._remove_suffix).grid(
+        ttk.Button(
+            button_row, text="Remove Suffix", command=self._remove_suffix, style="PoE.TButton"
+        ).grid(
             row=0, column=1, sticky="ew", padx=3
         )
-        ttk.Button(button_row, text="Clear All", command=self._clear_selection).grid(
+        ttk.Button(
+            button_row, text="Clear All", command=self._clear_selection, style="PoE.TButton"
+        ).grid(
             row=0, column=2, sticky="ew", padx=(3, 0)
         )
 
     def _build_affix_panel(self, parent: ttk.Frame) -> None:
-        affix_panel = ttk.Labelframe(parent, text="Affix Browser")
+        affix_panel = ttk.Labelframe(parent, text="Affix Browser", style="PoE.TLabelframe")
         affix_panel.grid(row=0, column=2, sticky="nsew", padx=(6, 12), pady=6)
         affix_panel.columnconfigure(0, weight=1)
         affix_panel.rowconfigure(2, weight=1)
 
-        top_row = ttk.Frame(affix_panel)
+        top_row = ttk.Frame(affix_panel, style="PoE.TFrame")
         top_row.grid(row=0, column=0, sticky="ew", padx=6, pady=6)
         top_row.columnconfigure(0, weight=1)
 
         self.affix_filter_var = tk.StringVar()
         self.affix_filter_var.trace_add("write", lambda *_: self._refresh_affixes())
-        affix_search = ttk.Entry(top_row, textvariable=self.affix_filter_var)
+        affix_search = ttk.Entry(top_row, textvariable=self.affix_filter_var, style="PoE.TEntry")
         affix_search.grid(row=0, column=0, sticky="ew")
         affix_search.insert(0, "Search affixes, add type:prefix or method:essence…")
         affix_search.bind("<FocusIn>", lambda event: self._clear_placeholder(event, self.affix_filter_var))
@@ -164,6 +381,7 @@ class CraftingApp(tk.Tk):
             text="Only show compatible",
             variable=self.compatible_only,
             command=self._refresh_affixes,
+            style="PoE.TCheckbutton",
         ).grid(row=0, column=1, padx=(6, 0))
 
         columns = ("type", "level", "methods")
@@ -172,6 +390,7 @@ class CraftingApp(tk.Tk):
             columns=columns,
             show="tree headings",
             selectmode="browse",
+            style="PoE.Treeview",
         )
         self.affix_tree.grid(row=2, column=0, sticky="nsew", padx=6, pady=(0, 6))
         self.affix_tree.heading("#0", text="Affix")
@@ -184,37 +403,84 @@ class CraftingApp(tk.Tk):
         self.affix_tree.column("methods", width=320)
         self.affix_tree.bind("<<TreeviewSelect>>", self._show_affix_details)
         self.affix_tree.bind("<Double-1>", self._quick_add_affix)
+        self.affix_tree.tag_configure("prefix", foreground=self.palette["accent"])
+        self.affix_tree.tag_configure("suffix", foreground="#8fb8ff")
 
-        affix_scroll = ttk.Scrollbar(affix_panel, orient="vertical", command=self.affix_tree.yview)
+        affix_scroll = ttk.Scrollbar(
+            affix_panel,
+            orient="vertical",
+            command=self.affix_tree.yview,
+            style="PoE.Vertical.TScrollbar",
+        )
         affix_scroll.grid(row=2, column=1, sticky="ns", pady=(0, 6))
         self.affix_tree.configure(yscrollcommand=affix_scroll.set)
 
-        button_bar = ttk.Frame(affix_panel)
+        button_bar = ttk.Frame(affix_panel, style="PoE.TFrame")
         button_bar.grid(row=3, column=0, sticky="ew", padx=6, pady=(0, 6))
         button_bar.columnconfigure(0, weight=1)
         button_bar.columnconfigure(1, weight=1)
 
-        ttk.Button(button_bar, text="Add as Prefix", command=lambda: self._add_affix("prefix")).grid(
+        ttk.Button(
+            button_bar,
+            text="Add as Prefix",
+            command=lambda: self._add_affix("prefix"),
+            style="PoE.TButton",
+        ).grid(
             row=0, column=0, sticky="ew", padx=(0, 3)
         )
-        ttk.Button(button_bar, text="Add as Suffix", command=lambda: self._add_affix("suffix")).grid(
+        ttk.Button(
+            button_bar,
+            text="Add as Suffix",
+            command=lambda: self._add_affix("suffix"),
+            style="PoE.TButton",
+        ).grid(
             row=0, column=1, sticky="ew", padx=(3, 0)
         )
 
-        self.affix_details = tk.Text(affix_panel, height=6, wrap="word", state="disabled", bg="#1e1e1e", fg="#f0f0f0")
+        self.affix_details = tk.Text(
+            affix_panel,
+            height=6,
+            wrap="word",
+            state="disabled",
+            bg=self.palette["panel"],
+            fg=self.palette["text"],
+            relief="flat",
+            highlightbackground=self.palette["border"],
+            highlightcolor=self.palette["accent"],
+            insertbackground=self.palette["text"],
+            font=("Segoe UI", 10),
+            borderwidth=0,
+        )
         self.affix_details.grid(row=4, column=0, columnspan=2, sticky="nsew", padx=6, pady=(0, 6))
 
     def _build_plan_panel(self, parent: ttk.Frame) -> None:
-        plan_panel = ttk.Labelframe(parent, text="Crafting Plan")
+        plan_panel = ttk.Labelframe(parent, text="Crafting Plan", style="PoE.TLabelframe")
         plan_panel.grid(row=1, column=0, columnspan=3, sticky="nsew", padx=12, pady=(0, 12))
         plan_panel.columnconfigure(0, weight=1)
         plan_panel.rowconfigure(0, weight=0)
         plan_panel.rowconfigure(1, weight=1)
 
-        button = ttk.Button(plan_panel, text="Generate plan", command=self._generate_plan)
+        button = ttk.Button(
+            plan_panel,
+            text="Generate plan",
+            command=self._generate_plan,
+            style="PoE.TButton",
+        )
         button.grid(row=0, column=0, sticky="ne", padx=6, pady=6)
 
-        self.plan_output = tk.Text(plan_panel, wrap="word", state="disabled", bg="#111", fg="#f7f7f7")
+        self.plan_output = tk.Text(
+            plan_panel,
+            wrap="word",
+            state="disabled",
+            bg=self.palette["panel"],
+            fg=self.palette["text"],
+            relief="flat",
+            highlightbackground=self.palette["border"],
+            highlightcolor=self.palette["accent"],
+            insertbackground=self.palette["text"],
+            font=("Segoe UI", 11),
+            borderwidth=0,
+        )
         self.plan_output.grid(row=1, column=0, sticky="nsew", padx=6, pady=(0, 6))
 
     # ------------------------------------------------------------------ helpers
@@ -322,6 +588,7 @@ class CraftingApp(tk.Tk):
                 "end",
                 text=affix.name,
                 values=(affix.type.title(), affix.level, ", ".join(affix.methods) or "Unknown"),
+                tags=(affix.type.lower(),),
             )
             self.affix_rows[item_id] = affix
 

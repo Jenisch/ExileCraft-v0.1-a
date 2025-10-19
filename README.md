@@ -5,8 +5,10 @@ This prototype provides an offline, data-driven helper that assembles step-by-st
 ## Features
 
 * Desktop interface built with Tkinter so you can browse bases, review affix requirements, and build a plan without memorising the entire database.
+* A Path of Exile-inspired dark theme with gilded highlights to make the planner feel native to Wraeclast instead of a plain console utility.
 * Rich-styled console interface (optional) that mimics the gilded Path of Exile aesthetic while guiding you through base and modifier selection.
 * Interactive planner that highlights deterministic crafting options before probabilistic gambles.
+* Curated base list limited to armour, jewellery, and weapon/off-hand classes so you are not overwhelmed by quest items or crafting-irrelevant clutter.
 * Optional integration with the full RePoE dataset for thousands of bases and mods.
 * Extensible local JSON fallback (`data/affixes.json`) for custom notes or private league tweaks.
 
@@ -53,16 +55,30 @@ If you see `'pip' is not recognized` on Windows, using `py -m pip ...` (or `pyth
 
 3. **Launch ExileCraft**
    * **Graphical interface (recommended):**
-     * Windows: double-click `run_app.bat` or run `py main.py` from Command Prompt/PowerShell.
+     * Windows: double-click the packaged `dist/ExileCraft.exe` (see the next section to build it) or run `py main.py` from Command Prompt/PowerShell.
      * macOS/Linux: run `./run_app.sh` (add execute permission once with `chmod +x run_app.sh` if needed) or call `python3 main.py` directly.
    * **Console interface (optional):**
-     * Windows: run `run_cli.bat` or `py main.py --cli`.
+     * Windows: run `dist/ExileCraft.exe --cli` after building it, or `py main.py --cli`.
      * macOS/Linux: run `./run_cli.sh` or `python3 main.py --cli`.
 
 4. **Build your item**
    * In the GUI, pick a base from the left column to review its tags, influence, and crafting tips.
    * Browse compatible affixes (or toggle the checkbox to explore every mod), double-click to add them to your prefix/suffix wishlist, and press **Generate plan**.
    * Prefer the CLI? Follow the prompts to enter the numeric choices and receive the plan in stylised panels.
+
+## Build a Windows executable
+
+You can bundle the planner into a single-file `ExileCraft.exe` with PyInstaller:
+
+```bash
+# Install dependencies (once per clone)
+py -m pip install -r requirements.txt
+
+# From the repository root
+py tools/build_exe.py --clean
+```
+
+The finished executable will land in `dist/ExileCraft.exe`. Double-click it to launch the Path of Exile styled interface without relying on `.bat` launchers. Re-run the command whenever you update the code or import fresh data.
 
 ### Extending the dataset
 
