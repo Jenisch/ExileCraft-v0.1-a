@@ -14,8 +14,14 @@ This prototype provides an offline, data-driven helper that assembles step-by-st
 Install the Python dependencies once inside your environment:
 
 ```bash
-pip install rich requests
+# Windows (Command Prompt or PowerShell)
+py -m pip install -r requirements.txt
+
+# macOS / Linux
+python3 -m pip install -r requirements.txt
 ```
+
+If you see `'pip' is not recognized` on Windows, using `py -m pip ...` (or `python -m pip ...` if your Python executable is named `python`) ensures the installer bundled with Python is used even when its Scripts directory is not on `PATH`.
 
 (If you're refreshing an existing checkout, rerun the command to ensure the themed interface dependencies are installed before launching the planner.)
 

@@ -8,7 +8,8 @@ from typing import Iterable, List, Sequence
 if importlib.util.find_spec("rich") is None:
     print(
         "The 'rich' package is required to run ExileCraft. "
-        "Install dependencies with `pip install -r requirements.txt` and try again."
+        "Install dependencies with `py -m pip install -r requirements.txt` (Windows) or "
+        "`python3 -m pip install -r requirements.txt` and try again."
     )
     sys.exit(1)
 
