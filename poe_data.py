@@ -3,7 +3,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Dict, Iterable, List, Optional, Sequence, Tuple
+from typing import Dict, Iterable, List, Optional, Sequence, Set, Tuple
 import json
 
 
@@ -297,8 +297,25 @@ class CraftingDataset:
         filtered_bases = self._filter_relevant_bases(bases)
         allowed_classes = {base.item_class for base in filtered_bases}
         filtered_affixes = self._filter_relevant_affixes(affixes, allowed_classes)
+        allowed_tags = {tag.lower() for base in filtered_bases for tag in base.tags}
+        self._normalize_affix_tags(filtered_affixes, allowed_tags)
         self._bases = sorted(filtered_bases, key=lambda base: (base.item_class, base.name))
         self._affixes = sorted(filtered_affixes, key=lambda affix: (affix.type, affix.name))
+
+    def _normalize_affix_tags(
+        self, affixes: Sequence[Affix], allowed_tags: Set[str]
+    ) -> None:
+        """Trim affix tag requirements to those present on our filtered bases."""
+
+        if not allowed_tags:
+            return
+
+        for affix in affixes:
+            if not affix.required_tags:
+                continue
+            affix.required_tags = [
+                tag for tag in affix.required_tags if tag.lower() in allowed_tags
+            ]
 
     def _filter_relevant_bases(self, bases: Sequence[BaseItem]) -> List[BaseItem]:
         filtered: List[BaseItem] = []
@@ -452,11 +469,16 @@ class CraftingDataset:
         for affix in self._affixes:
             if affix_type and affix.type != affix_type:
                 continue
-            if affix.item_classes and item_class not in affix.item_classes and "Universal" not in affix.item_classes:
+            matches_class = (
+                not affix.item_classes
+                or "Universal" in affix.item_classes
+                or item_class in affix.item_classes
+            )
+            if matches_class:
+                results.append(affix)
                 continue
-            if affix.required_tags and not tags.issuperset(affix.required_tags):
-                continue
-            results.append(affix)
+            if affix.required_tags and tags.issuperset(affix.required_tags):
+                results.append(affix)
         return results
 
 
