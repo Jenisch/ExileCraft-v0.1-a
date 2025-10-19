@@ -591,7 +591,9 @@ class CraftingApp(tk.Tk):
     def _refresh_affixes(self) -> None:
         if self.compatible_only.get() and self.selected_base:
             affixes = self.dataset.compatible_affixes(
-                self.selected_base.item_class, tags=self.selected_base.tags
+                self.selected_base.item_class,
+                tags=self.selected_base.tags,
+                include_master_crafts=False,
             )
         else:
             affixes = list(self.dataset.affixes)

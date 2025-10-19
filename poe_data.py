@@ -18,8 +18,6 @@ ALLOWED_AFFIX_DOMAINS = {
     "delve",
     "unveiled",
     "veiled",
-    "abyss_jewel",
-    "affliction_jewel",
 }
 
 RELEVANT_CLASS_KEYWORDS = (
@@ -132,6 +130,7 @@ class Affix:
     spawn_weights: List[Tuple[str, int]]
     stat_texts: List[str]
     stat_ranges: List[Tuple[int, int]]
+    domain: str = "item"
 
     @classmethod
     def from_dict(cls, payload: dict) -> "Affix":
@@ -154,6 +153,7 @@ class Affix:
                 for range_pair in payload.get("stat_ranges", [])
                 if isinstance(range_pair, (list, tuple)) and len(range_pair) == 2
             ],
+            domain=str(payload.get("domain", "item")),
         )
 
 
@@ -482,6 +482,7 @@ class CraftingDataset:
                     spawn_weights=spawn_weights,
                     stat_texts=stat_texts,
                     stat_ranges=stat_ranges,
+                    domain=domain,
                 )
             )
 
@@ -702,12 +703,19 @@ class CraftingDataset:
         *,
         tags: Optional[Iterable[str]] = None,
         affix_type: Optional[str] = None,
+        include_master_crafts: bool = True,
     ) -> List[Affix]:
         """Return affixes compatible with an item class and optional tags."""
 
         normalized_class, tag_set, base_tokens = self._build_base_context(item_class, tags)
         return list(
-            self._iter_compatible_affixes(normalized_class, tag_set, base_tokens, affix_type)
+            self._iter_compatible_affixes(
+                normalized_class,
+                tag_set,
+                base_tokens,
+                affix_type,
+                include_master_crafts=include_master_crafts,
+            )
         )
 
     def affix_roll_statistics(self, base: BaseItem, affix: Affix) -> Optional[AffixChance]:
@@ -722,7 +730,11 @@ class CraftingDataset:
         pool_weight = 0
         target_weight = 0
         for candidate in self._iter_compatible_affixes(
-            normalized_class, tag_set, base_tokens, affix.type
+            normalized_class,
+            tag_set,
+            base_tokens,
+            affix.type,
+            include_master_crafts=False,
         ):
             weight = self._effective_spawn_weight(candidate, tag_set, base_tokens)
             if weight <= 0:
@@ -758,9 +770,13 @@ class CraftingDataset:
         tag_set: Set[str],
         base_tokens: Set[str],
         affix_type: Optional[str],
+        *,
+        include_master_crafts: bool,
     ) -> Iterable[Affix]:
         for affix in self._affixes:
             if affix_type and affix.type.lower() != affix_type.lower():
+                continue
+            if not include_master_crafts and affix.domain == "crafted":
                 continue
             if not self._matches_item_class(affix, normalized_class, base_tokens):
                 continue

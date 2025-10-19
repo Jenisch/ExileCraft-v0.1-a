@@ -79,7 +79,8 @@
           1,
           1
         ]
-      ]
+      ],
+      "domain": "item"
     },
     {
       "name": "+(60-74) to maximum Energy Shield",
@@ -124,7 +125,8 @@
           60,
           74
         ]
-      ]
+      ],
+      "domain": "item"
     },
     {
       "name": "+(46-48)% increased Spell Damage",
@@ -164,7 +166,8 @@
           46,
           48
         ]
-      ]
+      ],
+      "domain": "item"
     },
     {
       "name": "+(35-37)% increased Effect of Non-Damaging Ailments",
@@ -209,7 +212,8 @@
           35,
           37
         ]
-      ]
+      ],
+      "domain": "item"
     },
     {
       "name": "+(38-42)% to Lightning Resistance",
@@ -248,7 +252,8 @@
           38,
           42
         ]
-      ]
+      ],
+      "domain": "item"
     },
     {
       "name": "+(17-19)% chance to Avoid Elemental Ailments",
@@ -287,7 +292,8 @@
           17,
           19
         ]
-      ]
+      ],
+      "domain": "item"
     }
   ]
 }
