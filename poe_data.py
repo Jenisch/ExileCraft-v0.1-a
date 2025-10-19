@@ -1,10 +1,11 @@
 """Data loading utilities for Path of Exile crafting information."""
 from __future__ import annotations
 
+import json
+import re
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Dict, Iterable, List, Optional, Sequence, Set, Tuple
-import json
 
 
 ROOT = Path(__file__).parent
@@ -297,7 +298,9 @@ class CraftingDataset:
         filtered_bases = self._filter_relevant_bases(bases)
         allowed_classes = {base.item_class for base in filtered_bases}
         filtered_affixes = self._filter_relevant_affixes(affixes, allowed_classes)
-        allowed_tags = {tag.lower() for base in filtered_bases for tag in base.tags}
+        allowed_tags = {
+            self._normalize_tag(tag) for base in filtered_bases for tag in base.tags
+        }
         self._normalize_affix_tags(filtered_affixes, allowed_tags)
         self._bases = sorted(filtered_bases, key=lambda base: (base.item_class, base.name))
         self._affixes = sorted(filtered_affixes, key=lambda affix: (affix.type, affix.name))
@@ -313,7 +316,11 @@ class CraftingDataset:
         for affix in affixes:
             if not affix.required_tags:
                 continue
-            trimmed = {tag for tag in affix.required_tags if tag.lower() in allowed_tags}
+            trimmed = {
+                tag
+                for tag in affix.required_tags
+                if self._normalize_tag(tag) in allowed_tags
+            }
             if trimmed:
                 affix.required_tags = sorted(trimmed)
             else:
@@ -329,13 +336,27 @@ class CraftingDataset:
     def _filter_relevant_affixes(
         self, affixes: Sequence[Affix], allowed_classes: Iterable[str]
     ) -> List[Affix]:
-        allowed = set(allowed_classes)
+        allowed = {self._normalize_class(name) for name in allowed_classes}
+        base_tokens = {
+            token for name in allowed_classes for token in self._tokenize(name)
+        }
         filtered: List[Affix] = []
         for affix in affixes:
-            if not affix.item_classes or "Universal" in affix.item_classes:
+            if not affix.item_classes:
                 filtered.append(affix)
                 continue
-            if any(item_class in allowed for item_class in affix.item_classes):
+            normalized = {self._normalize_class(name) for name in affix.item_classes}
+            if not normalized:
+                filtered.append(affix)
+                continue
+            if normalized & allowed:
+                filtered.append(affix)
+                continue
+            # fall back to partial token overlap so similar class names are retained
+            affix_tokens = {
+                token for name in affix.item_classes for token in self._tokenize(name)
+            }
+            if affix_tokens & base_tokens:
                 filtered.append(affix)
         return filtered
 
@@ -466,29 +487,56 @@ class CraftingDataset:
     ) -> List[Affix]:
         """Return affixes compatible with an item class and optional tags."""
 
-        item_class_norm = (item_class or "").strip().lower()
-        tag_set = {tag.lower() for tag in (tags or []) if tag}
+        item_class_norm = self._normalize_class(item_class or "")
+        item_tokens = self._tokenize(item_class)
+        tag_set = {self._normalize_tag(tag) for tag in (tags or []) if tag}
         results: List[Affix] = []
         for affix in self._affixes:
-            if affix_type and affix.type != affix_type:
+            if affix_type and affix.type.lower() != affix_type.lower():
                 continue
-            class_tokens = [token.lower() for token in affix.item_classes]
+            class_norms = [self._normalize_class(token) for token in affix.item_classes]
             matches_class = (
                 not affix.item_classes
-                or "universal" in class_tokens
-                or item_class_norm in class_tokens
+                or any(norm == "universal" for norm in class_norms)
+                or item_class_norm and item_class_norm in class_norms
                 or any(
-                    item_class_norm in token or token in item_class_norm
-                    for token in class_tokens
+                    item_class_norm and norm and (item_class_norm in norm or norm in item_class_norm)
+                    for norm in class_norms
                 )
             )
+            if not matches_class and item_tokens:
+                affix_token_sets = [self._tokenize(token) for token in affix.item_classes]
+                matches_class = any(item_tokens & tokens for tokens in affix_token_sets if tokens)
             if matches_class:
                 results.append(affix)
                 continue
-            required = {tag.lower() for tag in affix.required_tags if tag}
+            required = {self._normalize_tag(tag) for tag in affix.required_tags if tag}
             if required and tag_set.issuperset(required):
                 results.append(affix)
         return results
+
+    @staticmethod
+    def _normalize_aliases(value: str) -> str:
+        if value is None:
+            return ""
+        value = str(value).lower().strip()
+        if not value:
+            return ""
+        value = value.replace("armor", "armour")
+        value = value.replace("jewelry", "jewellery")
+        return value
+
+    def _normalize_class(self, value: str) -> str:
+        value = self._normalize_aliases(value)
+        return re.sub(r"[^a-z0-9]", "", value)
+
+    def _normalize_tag(self, value: str) -> str:
+        value = self._normalize_aliases(value)
+        return value.replace(" ", "_")
+
+    def _tokenize(self, value: str) -> Set[str]:
+        normalized = self._normalize_aliases(value)
+        return {token for token in re.split(r"[^a-z0-9]+", normalized) if token}
 
 
 __all__ = ["CraftingDataset", "BaseItem", "Affix"]
