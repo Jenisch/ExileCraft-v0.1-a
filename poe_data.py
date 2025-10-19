@@ -313,9 +313,11 @@ class CraftingDataset:
         for affix in affixes:
             if not affix.required_tags:
                 continue
-            affix.required_tags = [
-                tag for tag in affix.required_tags if tag.lower() in allowed_tags
-            ]
+            trimmed = {tag for tag in affix.required_tags if tag.lower() in allowed_tags}
+            if trimmed:
+                affix.required_tags = sorted(trimmed)
+            else:
+                affix.required_tags = []
 
     def _filter_relevant_bases(self, bases: Sequence[BaseItem]) -> List[BaseItem]:
         filtered: List[BaseItem] = []
@@ -464,20 +466,27 @@ class CraftingDataset:
     ) -> List[Affix]:
         """Return affixes compatible with an item class and optional tags."""
 
-        tags = set(tags or [])
+        item_class_norm = (item_class or "").strip().lower()
+        tag_set = {tag.lower() for tag in (tags or []) if tag}
         results: List[Affix] = []
         for affix in self._affixes:
             if affix_type and affix.type != affix_type:
                 continue
+            class_tokens = [token.lower() for token in affix.item_classes]
             matches_class = (
                 not affix.item_classes
-                or "Universal" in affix.item_classes
-                or item_class in affix.item_classes
+                or "universal" in class_tokens
+                or item_class_norm in class_tokens
+                or any(
+                    item_class_norm in token or token in item_class_norm
+                    for token in class_tokens
+                )
             )
             if matches_class:
                 results.append(affix)
                 continue
-            if affix.required_tags and tags.issuperset(affix.required_tags):
+            required = {tag.lower() for tag in affix.required_tags if tag}
+            if required and tag_set.issuperset(required):
                 results.append(affix)
         return results
 
