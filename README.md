@@ -17,6 +17,8 @@ Install the Python dependencies once inside your environment:
 pip install rich requests
 ```
 
+(If you're refreshing an existing checkout, rerun the command to ensure the themed interface dependencies are installed before launching the planner.)
+
 (If you plan to download the RePoE archive through the helper script, ensure outbound HTTPS access is available.)
 
 ## Usage
@@ -52,6 +54,7 @@ pip install rich requests
 
      (If needed, grant execute permission once with `chmod +x run_cli.sh`).
    * Prefer to call Python directly? You can always do `python main.py` (or `python3 main.py`) from the project folder.
+     Running it once after installing dependencies is a quick smoke test to confirm everything launches correctly.
 
 4. **Follow the prompts** to pick a base and highlight your desired affixes by entering the numbers shown in the themed menus. The planner prints the suggested crafting sequence in stylised panels.
 
