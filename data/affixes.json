@@ -37,7 +37,8 @@
         "Use Awakener's Orb to combine with another influenced modifier",
         "Harvest Augment Caster guarantees the mod if open prefix"
       ],
-      "notes": "One of the strongest prefixes for spell builds, very rare naturally."
+      "notes": "One of the strongest prefixes for spell builds, very rare naturally.",
+      "spawn_weights": [["shield", 1000], ["body_armour", 1000], ["caster", 1000], ["default", 1000]]
     },
     {
       "name": "+(60-74) to maximum Energy Shield",
@@ -50,7 +51,8 @@
         "Essence of Woe (Screaming or higher) guarantees a high tier ES roll",
         "Bench craft as a temporary filler if crafting prefixes last"
       ],
-      "notes": "Prioritize Dense Fossils or high-tier Essence of Woe for deterministic results."
+      "notes": "Prioritize Dense Fossils or high-tier Essence of Woe for deterministic results.",
+      "spawn_weights": [["shield", 1000], ["body_armour", 1000], ["energy_shield", 1000], ["default", 1000]]
     },
     {
       "name": "+(46-48)% increased Spell Damage",
@@ -63,7 +65,8 @@
         "Harvest Reforge Caster for increased odds",
         "Alteration spam on magic shield, Regal once prefix hits"
       ],
-      "notes": "Common prefix for caster shields, easier to obtain than gem level mods."
+      "notes": "Common prefix for caster shields, easier to obtain than gem level mods.",
+      "spawn_weights": [["shield", 1000], ["caster", 1000], ["default", 1000]]
     },
     {
       "name": "+(35-37)% increased Effect of Non-Damaging Ailments",
@@ -76,7 +79,8 @@
         "Harvest Reforge Caster with suffixes cannot be changed to target",
         "Fossils: Frigid + Metallic can roll it on appropriate bases"
       ],
-      "notes": "Synergises with builds that rely on chill, shock, or brittle effects."
+      "notes": "Synergises with builds that rely on chill, shock, or brittle effects.",
+      "spawn_weights": [["shield", 1000], ["body_armour", 1000], ["caster", 1000], ["default", 1000]]
     },
     {
       "name": "+(38-42)% to Lightning Resistance",
@@ -89,7 +93,8 @@
         "Bench craft until better resist is found",
         "Essence of Wrath guarantees a Lightning Resistance suffix"
       ],
-      "notes": "Use the crafting bench as a stopgap if chasing more premium suffixes."
+      "notes": "Use the crafting bench as a stopgap if chasing more premium suffixes.",
+      "spawn_weights": [["shield", 1000], ["body_armour", 1000], ["default", 1000]]
     },
     {
       "name": "+(17-19)% chance to Avoid Elemental Ailments",
@@ -102,7 +107,8 @@
         "Eldritch Ichor (Searing Exarch) implicit can roll similar effect",
         "Veiled modifier from Betrayal (Aisling) upgraded for higher values"
       ],
-      "notes": "Pair with other ailment avoidance sources to reach 100%."
+      "notes": "Pair with other ailment avoidance sources to reach 100%.",
+      "spawn_weights": [["shield", 1000], ["body_armour", 1000], ["default", 1000]]
     }
   ]
 }

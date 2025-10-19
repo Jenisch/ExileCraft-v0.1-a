@@ -656,6 +656,15 @@ class CraftingApp(tk.Tk):
         ]
         for method in affix.methods or ["Unknown"]:
             lines.append(f" • {method}")
+        if affix.spawn_weights:
+            lines.append("")
+            lines.append("Spawn weighting:")
+            preview = sorted(affix.spawn_weights, key=lambda item: item[0])[:6]
+            for tag, weight in preview:
+                pretty = tag.replace("_", " ")
+                lines.append(f" • {pretty} → {weight}")
+            if len(affix.spawn_weights) > len(preview):
+                lines.append(" • …")
         if affix.notes:
             lines.append("")
             lines.append("Notes:")

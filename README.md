@@ -5,6 +5,7 @@ This prototype provides an offline, data-driven helper that assembles step-by-st
 ## Features
 
 * Desktop interface built with Tkinter so you can browse bases, review affix requirements, and build a plan without memorising the entire database.
+* Affix browser that mirrors in-game availability by applying RePoE spawn weights, so the **Only show compatible** toggle now reflects the true mod pool for the selected base.
 * A Path of Exile-inspired dark theme with gilded highlights to make the planner feel native to Wraeclast instead of a plain console utility.
 * Rich-styled console interface (optional) that mimics the gilded Path of Exile aesthetic while guiding you through base and modifier selection.
 * Interactive planner that highlights deterministic crafting options before probabilistic gambles.
@@ -63,7 +64,7 @@ If you see `'pip' is not recognized` on Windows, using `py -m pip ...` (or `pyth
 
 4. **Build your item**
    * In the GUI, pick a base from the left column to review its tags, influence, and crafting tips.
-   * Browse compatible affixes (or toggle the checkbox to explore every mod), double-click to add them to your prefix/suffix wishlist, and press **Generate plan**.
+  * Browse compatible affixes (or toggle the checkbox to explore every mod). Compatibility now evaluates the same spawn-weight logic used by the game, so influenced or tag-gated modifiers appear exactly when their prerequisites are met. Double-click to add them to your prefix/suffix wishlist, then press **Generate plan**.
    * Prefer the CLI? Follow the prompts to enter the numeric choices and receive the plan in stylised panels.
 
 ## Build a Windows executable

@@ -129,6 +129,7 @@ class Affix:
     level: int
     methods: List[str]
     notes: str
+    spawn_weights: List[Tuple[str, int]]
 
     @classmethod
     def from_dict(cls, payload: dict) -> "Affix":
@@ -140,6 +141,11 @@ class Affix:
             level=int(payload.get("level", 1)),
             methods=list(payload.get("methods", [])),
             notes=payload.get("notes", ""),
+            spawn_weights=[
+                (str(entry[0]), int(entry[1]))
+                for entry in payload.get("spawn_weights", [])
+                if isinstance(entry, (list, tuple)) and len(entry) == 2
+            ],
         )
 
 
@@ -306,6 +312,14 @@ class CraftingDataset:
             methods = self._heuristic_methods(entry, spawn_tags, affix_type)
             notes = self._derive_affix_notes(entry)
 
+            spawn_weights = []
+            for weight_entry in entry.get("spawn_weights", []) or []:
+                tag = weight_entry.get("tag")
+                weight = int(weight_entry.get("weight", 0) or 0)
+                if not tag or weight <= 0:
+                    continue
+                spawn_weights.append((tag, weight))
+
             affixes.append(
                 Affix(
                     name=name,
@@ -315,6 +329,7 @@ class CraftingDataset:
                     level=required_level,
                     methods=methods,
                     notes=notes,
+                    spawn_weights=spawn_weights,
                 )
             )
 
@@ -328,6 +343,7 @@ class CraftingDataset:
         allowed_classes = {base.item_class for base in filtered_bases}
         filtered_affixes = self._filter_relevant_affixes(affixes, allowed_classes)
         self._normalize_affix_tags(filtered_affixes)
+        self._normalize_spawn_weights(filtered_affixes)
         self._bases = sorted(filtered_bases, key=lambda base: (base.item_class, base.name))
         self._affixes = sorted(filtered_affixes, key=lambda affix: (affix.type, affix.name))
 
@@ -344,6 +360,18 @@ class CraftingDataset:
                     continue
                 normalised.append(normalised_tag)
             affix.required_tags = normalised
+
+    def _normalize_spawn_weights(self, affixes: Sequence[Affix]) -> None:
+        for affix in affixes:
+            if not affix.spawn_weights:
+                continue
+            combined: Dict[str, int] = {}
+            for tag, weight in affix.spawn_weights:
+                normalised = self._normalize_tag(tag)
+                if not normalised:
+                    continue
+                combined[normalised] = combined.get(normalised, 0) + int(weight)
+            affix.spawn_weights = [(tag, weight) for tag, weight in combined.items() if weight > 0]
 
     def _filter_relevant_bases(self, bases: Sequence[BaseItem]) -> List[BaseItem]:
         filtered: List[BaseItem] = []
@@ -509,36 +537,87 @@ class CraftingDataset:
     ) -> List[Affix]:
         """Return affixes compatible with an item class and optional tags."""
 
-        item_class_norm = self._normalize_class(item_class or "")
-        item_tokens = self._tokenize(item_class)
+        normalized_class = self._normalize_class(item_class or "")
         tag_set = {self._normalize_tag(tag) for tag in (tags or []) if tag}
+        tag_set.discard("")
+        tag_set.add("default")
+        tag_set.add("default_item")
+        if normalized_class:
+            tag_set.add(normalized_class)
+
+        token_cache: Dict[str, Set[str]] = {}
+
+        def get_tokens(value: str) -> Set[str]:
+            if value not in token_cache:
+                token_cache[value] = self._tokenize(value)
+            return token_cache[value]
+
+        base_tokens: Set[str] = set()
+        for tag in tag_set:
+            base_tokens.update(get_tokens(tag))
+        base_tokens.update(self._tokenize(item_class))
+
         results: List[Affix] = []
         for affix in self._affixes:
             if affix_type and affix.type.lower() != affix_type.lower():
                 continue
-            class_norms = [self._normalize_class(token) for token in affix.item_classes]
-            matches_class = (
-                not affix.item_classes
-                or any(norm == "universal" for norm in class_norms)
-                or (item_class_norm and item_class_norm in class_norms)
-            )
-            if not matches_class and item_tokens:
-                affix_token_sets = [self._tokenize(token) for token in affix.item_classes]
-                matches_class = any(
-                    item_tokens == tokens or item_tokens.issuperset(tokens)
-                    for tokens in affix_token_sets
-                    if tokens
-                )
 
-            required = {self._normalize_tag(tag) for tag in affix.required_tags if tag}
-            matches_tags = not required or tag_set.issuperset(required)
+            if not self._matches_item_class(affix, normalized_class, base_tokens):
+                continue
 
-            if matches_class and matches_tags:
-                results.append(affix)
-            elif matches_tags and not affix.item_classes:
-                # Some mods gate purely on tags (e.g. jewel implicits).
-                results.append(affix)
+            if not self._matches_required_tags(affix, tag_set, base_tokens):
+                continue
+
+            if not self._matches_spawn_weights(affix, tag_set, base_tokens):
+                continue
+
+            results.append(affix)
         return results
+
+    def _matches_item_class(
+        self, affix: Affix, normalized_class: str, base_tokens: Set[str]
+    ) -> bool:
+        if not affix.item_classes:
+            return True
+        class_norms = [self._normalize_class(token) for token in affix.item_classes]
+        if any(norm == "universal" for norm in class_norms):
+            return True
+        if normalized_class and normalized_class in class_norms:
+            return True
+        if not base_tokens:
+            return False
+        affix_token_sets = [self._tokenize(token) for token in affix.item_classes]
+        return any(tokens and tokens.issubset(base_tokens) for tokens in affix_token_sets)
+
+    def _matches_required_tags(
+        self, affix: Affix, tag_set: Set[str], base_tokens: Set[str]
+    ) -> bool:
+        if not affix.required_tags:
+            return True
+        for tag in affix.required_tags:
+            if tag in tag_set:
+                continue
+            tokens = self._tokenize(tag)
+            if not tokens or not tokens.issubset(base_tokens):
+                return False
+        return True
+
+    def _matches_spawn_weights(
+        self, affix: Affix, tag_set: Set[str], base_tokens: Set[str]
+    ) -> bool:
+        if not affix.spawn_weights:
+            return True
+        total_weight = 0
+        for tag, weight in affix.spawn_weights:
+            if weight <= 0:
+                continue
+            if tag in tag_set:
+                total_weight += weight
+                continue
+            tokens = self._tokenize(tag)
+            if tokens and tokens.issubset(base_tokens):
+                total_weight += weight
+        return total_weight > 0
 
     @staticmethod
     def _normalize_aliases(value: str) -> str:
