@@ -346,6 +346,9 @@ class CraftingDataset:
                 filtered.append(affix)
                 continue
             normalized = {self._normalize_class(name) for name in affix.item_classes}
+            if "universal" in normalized:
+                filtered.append(affix)
+                continue
             if not normalized:
                 filtered.append(affix)
                 continue
