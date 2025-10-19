@@ -528,7 +528,8 @@ class CraftingDataset:
 
     def _normalize_class(self, value: str) -> str:
         value = self._normalize_aliases(value)
-        return re.sub(r"[^a-z0-9]", "", value)
+        normalized = re.sub(r"[^a-z0-9]", "", value)
+        return self._singularize(normalized)
 
     def _normalize_tag(self, value: str) -> str:
         value = self._normalize_aliases(value)
@@ -536,7 +537,30 @@ class CraftingDataset:
 
     def _tokenize(self, value: str) -> Set[str]:
         normalized = self._normalize_aliases(value)
-        return {token for token in re.split(r"[^a-z0-9]+", normalized) if token}
+        tokens = {token for token in re.split(r"[^a-z0-9]+", normalized) if token}
+        expanded: Set[str] = set(tokens)
+        for token in tokens:
+            singular = self._singularize(token)
+            if singular:
+                expanded.add(singular)
+        return expanded
+
+    def _singularize(self, token: str) -> str:
+        """Best-effort singularization so class/tag comparisons survive plurals."""
+
+        if not token:
+            return ""
+        if token.endswith("ies") and len(token) > 3:
+            return token[:-3] + "y"
+        if token.endswith("sses") or token.endswith("shes") or token.endswith("ches"):
+            return token[:-2]
+        if token.endswith("xes") or token.endswith("zes"):
+            return token[:-2]
+        if token.endswith("es") and len(token) > 2 and token[-3] not in "sxz":
+            return token[:-2]
+        if token.endswith("s") and not token.endswith("ss") and len(token) > 1:
+            return token[:-1]
+        return token
 
 
 __all__ = ["CraftingDataset", "BaseItem", "Affix"]
