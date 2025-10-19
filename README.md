@@ -4,7 +4,8 @@ This prototype provides an offline, data-driven helper that assembles step-by-st
 
 ## Features
 
-* Rich-styled interface that mimics the gilded Path of Exile aesthetic while guiding you through base and modifier selection.
+* Desktop interface built with Tkinter so you can browse bases, review affix requirements, and build a plan without memorising the entire database.
+* Rich-styled console interface (optional) that mimics the gilded Path of Exile aesthetic while guiding you through base and modifier selection.
 * Interactive planner that highlights deterministic crafting options before probabilistic gambles.
 * Optional integration with the full RePoE dataset for thousands of bases and mods.
 * Extensible local JSON fallback (`data/affixes.json`) for custom notes or private league tweaks.
@@ -50,19 +51,18 @@ If you see `'pip' is not recognized` on Windows, using `py -m pip ...` (or `pyth
      Add `--force` if you want to overwrite an existing import.
    * Skip this step to try the bundled sample data.
 
-3. **Pick a launcher**
-   * Windows: double-click `run_cli.bat` or run it from Command Prompt. The script keeps the window open after the plan is generated so you can read the output.
-   * macOS/Linux: run the included shell helper from Terminal:
+3. **Launch ExileCraft**
+   * **Graphical interface (recommended):**
+     * Windows: double-click `run_app.bat` or run `py main.py` from Command Prompt/PowerShell.
+     * macOS/Linux: run `./run_app.sh` (add execute permission once with `chmod +x run_app.sh` if needed) or call `python3 main.py` directly.
+   * **Console interface (optional):**
+     * Windows: run `run_cli.bat` or `py main.py --cli`.
+     * macOS/Linux: run `./run_cli.sh` or `python3 main.py --cli`.
 
-     ```bash
-     ./run_cli.sh
-     ```
-
-     (If needed, grant execute permission once with `chmod +x run_cli.sh`).
-   * Prefer to call Python directly? You can always do `python main.py` (or `python3 main.py`) from the project folder.
-     Running it once after installing dependencies is a quick smoke test to confirm everything launches correctly.
-
-4. **Follow the prompts** to pick a base and highlight your desired affixes by entering the numbers shown in the themed menus. The planner prints the suggested crafting sequence in stylised panels.
+4. **Build your item**
+   * In the GUI, pick a base from the left column to review its tags, influence, and crafting tips.
+   * Browse compatible affixes (or toggle the checkbox to explore every mod), double-click to add them to your prefix/suffix wishlist, and press **Generate plan**.
+   * Prefer the CLI? Follow the prompts to enter the numeric choices and receive the plan in stylised panels.
 
 ### Extending the dataset
 

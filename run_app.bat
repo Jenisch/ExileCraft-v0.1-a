@@ -1,5 +1,5 @@
 @echo off
-REM Launch the ExileCraft CLI from Windows Explorer or Command Prompt.
+REM Launch the ExileCraft GUI from Windows Explorer or Command Prompt.
 cd /d %~dp0
 
 REM Pick whichever Python launcher is available.
@@ -10,7 +10,7 @@ if %errorlevel%==0 (
     set "EXILECRAFT_PY=python"
 )
 
-%EXILECRAFT_PY% main.py --cli %*
+%EXILECRAFT_PY% main.py %*
 echo.
 echo Press any key to close this window.
 pause >nul
