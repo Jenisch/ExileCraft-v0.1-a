@@ -148,10 +148,20 @@ class CraftingEngine:
 
     def _format_base_acquisition(self, base: BaseItem) -> str:
         influence = f" with {', '.join(base.influence)} influence" if base.influence else ""
+        compatible = self.dataset.compatible_affixes(base.item_class, tags=base.tags)
+        if compatible:
+            required_ilvl = max(affix.level for affix in compatible)
+            hint = ""
+        else:
+            required_ilvl = 80
+            hint = (
+                " Dataset data is incomplete for this base; import the full RePoE dataset or extend "
+                "data/affixes.json for precise item level targeting."
+            )
         return (
             f"Buy or farm a {base.name}{influence}. Item level should be at least "
-            f"{max(80, max(affix.level for affix in self.dataset.compatible_affixes(base.item_class, tags=base.tags)))}"
-            "."
+            f"{max(80, required_ilvl)}."
+            f"{hint}"
         )
 
     def _format_finishing_steps(
