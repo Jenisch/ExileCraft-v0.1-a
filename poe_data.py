@@ -12,6 +12,16 @@ ROOT = Path(__file__).parent
 SAMPLE_DATA_PATH = ROOT / "data" / "affixes.json"
 REPOE_DATA_DIR = ROOT / "data" / "repoe"
 
+ALLOWED_AFFIX_DOMAINS = {
+    "item",
+    "crafted",
+    "delve",
+    "unveiled",
+    "veiled",
+    "abyss_jewel",
+    "affliction_jewel",
+}
+
 RELEVANT_CLASS_KEYWORDS = (
     "armour",
     "armor",
@@ -254,14 +264,30 @@ class CraftingDataset:
         affixes: List[Affix] = []
         base_tags = list(base_lookup.values())
         for mod_id, entry in payload.items():
-            generation_type = entry.get("generation_type")
-            if generation_type not in (1, 2):
+            domain = str(entry.get("domain", "")).lower()
+            if domain and domain not in ALLOWED_AFFIX_DOMAINS:
                 continue
+
+            generation_type = entry.get("generation_type")
+            affix_type: Optional[str] = None
+            if isinstance(generation_type, int):
+                if generation_type == 1:
+                    affix_type = "prefix"
+                elif generation_type == 2:
+                    affix_type = "suffix"
+            else:
+                kind = str(generation_type or "").lower()
+                if "prefix" in kind:
+                    affix_type = "prefix"
+                elif "suffix" in kind:
+                    affix_type = "suffix"
+            if not affix_type:
+                continue
+
             name = entry.get("name") or entry.get("generation_weight_tag", "")
             if not name:
                 # skip meta/internal mods without exposed names
                 continue
-            affix_type = "prefix" if generation_type == 1 else "suffix"
             required_level = int(entry.get("required_level", 1) or 1)
 
             spawn_tags = set(entry.get("spawn_tags", []))
