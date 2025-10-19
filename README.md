@@ -10,11 +10,22 @@ This prototype provides an offline, data-driven helper that assembles step-by-st
 
 ## Usage
 
-```bash
-python main.py
-```
+1. **Get the files**
+   * If you're comfortable with Git, clone the repository: `git clone https://github.com/<your-account>/ExileCraft-v0.1-a.git`.
+   * Otherwise download the repository as a ZIP (on GitHub use **Code ▸ Download ZIP**) and extract it anywhere on your machine. This keeps the files together so you don't need to copy/paste each script.
 
-Follow the prompts to pick a base, then "check" your desired affixes by entering the numbers shown in the menu. The tool prints the suggested crafting sequence.
+2. **Pick a launcher**
+   * Windows: double-click `run_cli.bat` or run it from Command Prompt. The script keeps the window open after the plan is generated so you can read the output.
+   * macOS/Linux: run the included shell helper from Terminal:
+
+     ```bash
+     ./run_cli.sh
+     ```
+
+     (If needed, grant execute permission once with `chmod +x run_cli.sh`).
+   * Prefer to call Python directly? You can always do `python main.py` (or `python3 main.py`) from the project folder.
+
+3. **Follow the prompts** to pick a base and "check" your desired affixes by entering the numbers shown in the menu. The tool prints the suggested crafting sequence.
 
 ### Extending the dataset
 
