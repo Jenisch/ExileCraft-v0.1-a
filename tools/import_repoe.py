@@ -20,6 +20,7 @@ DOWNLOAD_URL = "https://github.com/brather1ng/RePoE/archive/refs/heads/master.zi
 REQUIRED_FILES = {
     "base_items.min.json",
     "mods.min.json",
+    "stat_translations.min.json",
 }
 
 

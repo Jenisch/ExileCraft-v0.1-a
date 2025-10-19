@@ -418,7 +418,7 @@ class CraftingApp(tk.Tk):
         self.affix_count = ttk.Label(info_row, text="0 affixes", style="PoE.Subtle.TLabel")
         self.affix_count.pack(side="left")
 
-        columns = ("type", "level", "methods")
+        columns = ("type", "level", "effect", "methods")
         self.affix_tree = ttk.Treeview(
             affix_panel,
             columns=columns,
@@ -430,10 +430,12 @@ class CraftingApp(tk.Tk):
         self.affix_tree.heading("#0", text="Affix")
         self.affix_tree.heading("type", text="Type")
         self.affix_tree.heading("level", text="Level")
+        self.affix_tree.heading("effect", text="Effect")
         self.affix_tree.heading("methods", text="Acquisition")
         self.affix_tree.column("#0", width=240)
         self.affix_tree.column("type", width=80, anchor="center")
         self.affix_tree.column("level", width=60, anchor="center")
+        self.affix_tree.column("effect", width=260)
         self.affix_tree.column("methods", width=320)
         self.affix_tree.bind("<<TreeviewSelect>>", self._show_affix_details)
         self.affix_tree.bind("<Double-1>", self._quick_add_affix)
@@ -630,7 +632,12 @@ class CraftingApp(tk.Tk):
                 "",
                 "end",
                 text=affix.name,
-                values=(affix.type.title(), affix.level, ", ".join(affix.methods) or "Unknown"),
+                values=(
+                    affix.type.title(),
+                    affix.level,
+                    affix.stat_texts[0] if affix.stat_texts else "—",
+                    ", ".join(affix.methods) or "Unknown",
+                ),
                 tags=(affix.type.lower(),),
             )
             self.affix_rows[item_id] = affix
@@ -665,6 +672,23 @@ class CraftingApp(tk.Tk):
                 lines.append(f" • {pretty} → {weight}")
             if len(affix.spawn_weights) > len(preview):
                 lines.append(" • …")
+        if affix.stat_texts:
+            lines.append("")
+            lines.append("Effect:")
+            for text in affix.stat_texts:
+                lines.append(f" • {text}")
+        if self.selected_base:
+            chance = self.dataset.affix_roll_statistics(self.selected_base, affix)
+            if chance:
+                odds = max(1.0, round(chance.expected_rolls, 1))
+                lines.append("")
+                lines.append("Alteration odds:")
+                lines.append(
+                    f" • Weight share: {chance.weight}/{chance.total_weight} of the {affix.type} pool"
+                )
+                lines.append(
+                    f" • Chance per roll: {chance.chance * 100:.3f}% (≈1 in {odds:,.1f})"
+                )
         if affix.notes:
             lines.append("")
             lines.append("Notes:")

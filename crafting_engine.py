@@ -2,9 +2,9 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Dict, Iterable, List, Sequence
+from typing import Dict, Iterable, List, Optional, Sequence
 
-from poe_data import Affix, BaseItem, CraftingDataset
+from poe_data import Affix, AffixChance, BaseItem, CraftingDataset
 
 
 @dataclass
@@ -58,14 +58,18 @@ class CraftingEngine:
             )
         )
 
+        tracker = self._build_progress_tracker(base, prefix_data, suffix_data)
+        if tracker:
+            steps.append(tracker)
+
         steps.extend(self._prepare_base_steps(base, all_categories))
 
         if prefix_data:
-            steps.extend(self._detailed_steps_for_kind(prefix_data, "prefix"))
+            steps.extend(self._detailed_steps_for_kind(base, prefix_data, "prefix"))
         if prefix_data and suffix_data:
             steps.append(self._stabilise_between_kinds())
         if suffix_data:
-            steps.extend(self._detailed_steps_for_kind(suffix_data, "suffix"))
+            steps.extend(self._detailed_steps_for_kind(base, suffix_data, "suffix"))
 
         steps.append(
             CraftingStep(
@@ -123,8 +127,49 @@ class CraftingEngine:
             details.append("Clean all sockets and quality to 20% before starting advanced crafting.")
         return [CraftingStep(title="Prepare the base", details="\n".join(details))]
 
+    def _build_progress_tracker(
+        self,
+        base: BaseItem,
+        prefixes: Dict[str, Affix],
+        suffixes: Dict[str, Affix],
+    ) -> Optional[CraftingStep]:
+        if not prefixes and not suffixes:
+            return None
+        lines: List[str] = [
+            "Use this checklist to keep track of secured mods while you craft.",
+            "Mark each entry once the mod is locked in.",
+            "",
+        ]
+        for kind, data in (("prefix", prefixes), ("suffix", suffixes)):
+            for affix in sorted(data.values(), key=lambda item: (item.level, item.name)):
+                lines.extend(self._progress_lines_for_affix(base, affix, kind))
+                lines.append("")
+        details = "\n".join(line for line in lines if line is not None)
+        return CraftingStep(title="Progress tracker", details=details.strip())
+
+    def _progress_lines_for_affix(
+        self, base: BaseItem, affix: Affix, kind: str
+    ) -> List[str]:
+        summary: List[str] = []
+        summary.append(f"[ ] {kind.title()} – {affix.name} (ilvl {affix.level}+)")
+        if affix.stat_texts:
+            summary.append(f"    Effect: {affix.stat_texts[0]}")
+        chance = self.dataset.affix_roll_statistics(base, affix)
+        if chance:
+            summary.append(f"    Alteration odds: {self._format_chance_summary(chance)}")
+        methods = self._prioritise_methods(affix.methods)
+        if methods:
+            summary.append(f"    Preferred method: {methods[0]}")
+        return summary
+
+    @staticmethod
+    def _format_chance_summary(chance: AffixChance) -> str:
+        percentage = chance.chance * 100
+        expected = max(1.0, chance.expected_rolls)
+        return f"{percentage:.3f}% (≈1 in {expected:,.0f})"
+
     def _detailed_steps_for_kind(
-        self, affixes: Dict[str, Affix], kind: str
+        self, base: BaseItem, affixes: Dict[str, Affix], kind: str
     ) -> List[CraftingStep]:
         ordered = sorted(
             affixes.values(),
@@ -134,7 +179,7 @@ class CraftingEngine:
                 affix.name,
             ),
         )
-        return [self._crafting_step_for_affix(affix, kind) for affix in ordered]
+        return [self._crafting_step_for_affix(base, affix, kind) for affix in ordered]
 
     def _stabilise_between_kinds(self) -> CraftingStep:
         opposite_instructions = [
@@ -146,7 +191,7 @@ class CraftingEngine:
             details="\n".join(opposite_instructions),
         )
 
-    def _crafting_step_for_affix(self, affix: Affix, kind: str) -> CraftingStep:
+    def _crafting_step_for_affix(self, base: BaseItem, affix: Affix, kind: str) -> CraftingStep:
         category = self._method_category(affix)
         methods = self._prioritise_methods(affix.methods)
         primary = methods[0] if methods else "Spam alterations/regals until it appears."
@@ -157,9 +202,18 @@ class CraftingEngine:
         ]
         if fallbacks:
             details.append(f"Fallbacks: {fallbacks}.")
+        chance = self.dataset.affix_roll_statistics(base, affix)
+        if chance:
+            details.append(
+                f"Alteration odds: {self._format_chance_summary(chance)} (weight {chance.weight}/{chance.total_weight})."
+            )
+        currency_hint = self._currency_hint(category, affix)
+        if currency_hint:
+            details.append(currency_hint)
         details.extend(self._category_guidance(category, kind))
         if affix.notes:
-            details.append(f"Notes: {affix.notes}.")
+            details.append(f"Notes: {affix.notes}")
+        details.append("Tick this mod off in the tracker once it is secured.")
         return CraftingStep(
             title=f"Secure {kind} '{affix.name}'",
             details="\n".join(details),
@@ -209,6 +263,29 @@ class CraftingEngine:
                 opposite=opposite_plural
             ),
         ]
+
+    def _currency_hint(self, category: str, affix: Affix) -> Optional[str]:
+        if category == "harvest":
+            return "Recommended currency: Harvest Augment or Reforge crafts for deterministic progress."
+        if category == "essence":
+            essence = next((method for method in affix.methods if "Essence" in method), None)
+            if essence:
+                return f"Recommended currency: {essence}."
+            return "Recommended currency: Spam the matching Essence until the mod lands."
+        if category == "fossil":
+            fossil = next((method for method in affix.methods if "Fossil" in method or "Delve" in method), None)
+            if fossil:
+                return f"Recommended currency: {fossil}."
+            return "Recommended currency: Use the appropriate fossil combination in a resonator."
+        if category == "influence":
+            return "Recommended currency: Awakener's Orbs, Maven Orbs, or Conqueror Exalts targeting the influence."
+        if category == "bench":
+            return "Recommended currency: Use the crafting bench or unveil options after other mods are finished."
+        if category == "alt_regal":
+            return (
+                "Recommended currency: Orbs of Alteration until it appears, Regal immediately, then lock the opposite side before finishing."
+            )
+        return None
 
     @staticmethod
     def _plural_kind(kind: str) -> str:

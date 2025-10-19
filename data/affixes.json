@@ -3,8 +3,14 @@
     {
       "name": "Fossilised Spirit Shield",
       "item_class": "Shield",
-      "tags": ["caster", "energy_shield", "shield"],
-      "influence": ["Shaper"],
+      "tags": [
+        "caster",
+        "energy_shield",
+        "shield"
+      ],
+      "influence": [
+        "Shaper"
+      ],
       "notes": "Popular caster base for spell-focused shields due to high energy shield.",
       "craft_tips": [
         "Use Perfect Fossils to target 28%+ quality before beginning expensive attempts.",
@@ -15,7 +21,11 @@
     {
       "name": "Vaal Regalia",
       "item_class": "Body Armour",
-      "tags": ["caster", "energy_shield", "body_armour"],
+      "tags": [
+        "caster",
+        "energy_shield",
+        "body_armour"
+      ],
       "influence": [],
       "notes": "High ES base commonly used for endgame casters.",
       "craft_tips": [
@@ -29,8 +39,13 @@
     {
       "name": "+1 to Level of all Spell Skill Gems",
       "type": "prefix",
-      "item_classes": ["Shield", "Body Armour"],
-      "required_tags": ["caster"],
+      "item_classes": [
+        "Shield",
+        "Body Armour"
+      ],
+      "required_tags": [
+        "caster"
+      ],
       "level": 75,
       "methods": [
         "Influence-specific: Shaper or Crusader base required",
@@ -38,13 +53,44 @@
         "Harvest Augment Caster guarantees the mod if open prefix"
       ],
       "notes": "One of the strongest prefixes for spell builds, very rare naturally.",
-      "spawn_weights": [["shield", 1000], ["body_armour", 1000], ["caster", 1000], ["default", 1000]]
+      "spawn_weights": [
+        [
+          "shield",
+          1000
+        ],
+        [
+          "body_armour",
+          1000
+        ],
+        [
+          "caster",
+          1000
+        ],
+        [
+          "default",
+          1000
+        ]
+      ],
+      "stat_texts": [
+        "+1 to Level of all Spell Skill Gems"
+      ],
+      "stat_ranges": [
+        [
+          1,
+          1
+        ]
+      ]
     },
     {
       "name": "+(60-74) to maximum Energy Shield",
       "type": "prefix",
-      "item_classes": ["Shield", "Body Armour"],
-      "required_tags": ["energy_shield"],
+      "item_classes": [
+        "Shield",
+        "Body Armour"
+      ],
+      "required_tags": [
+        "energy_shield"
+      ],
       "level": 68,
       "methods": [
         "Delve Fossils: Dense Fossil heavily weights ES prefixes",
@@ -52,13 +98,43 @@
         "Bench craft as a temporary filler if crafting prefixes last"
       ],
       "notes": "Prioritize Dense Fossils or high-tier Essence of Woe for deterministic results.",
-      "spawn_weights": [["shield", 1000], ["body_armour", 1000], ["energy_shield", 1000], ["default", 1000]]
+      "spawn_weights": [
+        [
+          "shield",
+          1000
+        ],
+        [
+          "body_armour",
+          1000
+        ],
+        [
+          "energy_shield",
+          1000
+        ],
+        [
+          "default",
+          1000
+        ]
+      ],
+      "stat_texts": [
+        "+60-74 to maximum Energy Shield"
+      ],
+      "stat_ranges": [
+        [
+          60,
+          74
+        ]
+      ]
     },
     {
       "name": "+(46-48)% increased Spell Damage",
       "type": "prefix",
-      "item_classes": ["Shield"],
-      "required_tags": ["caster"],
+      "item_classes": [
+        "Shield"
+      ],
+      "required_tags": [
+        "caster"
+      ],
       "level": 68,
       "methods": [
         "Fossils: Aetheric + Metallic Fossils increase caster prefix weighting",
@@ -66,13 +142,40 @@
         "Alteration spam on magic shield, Regal once prefix hits"
       ],
       "notes": "Common prefix for caster shields, easier to obtain than gem level mods.",
-      "spawn_weights": [["shield", 1000], ["caster", 1000], ["default", 1000]]
+      "spawn_weights": [
+        [
+          "shield",
+          1000
+        ],
+        [
+          "caster",
+          1000
+        ],
+        [
+          "default",
+          1000
+        ]
+      ],
+      "stat_texts": [
+        "+46-48% increased Spell Damage"
+      ],
+      "stat_ranges": [
+        [
+          46,
+          48
+        ]
+      ]
     },
     {
       "name": "+(35-37)% increased Effect of Non-Damaging Ailments",
       "type": "suffix",
-      "item_classes": ["Shield", "Body Armour"],
-      "required_tags": ["caster"],
+      "item_classes": [
+        "Shield",
+        "Body Armour"
+      ],
+      "required_tags": [
+        "caster"
+      ],
       "level": 72,
       "methods": [
         "Harvest Augment Caster adds the mod when suffix open",
@@ -80,12 +183,41 @@
         "Fossils: Frigid + Metallic can roll it on appropriate bases"
       ],
       "notes": "Synergises with builds that rely on chill, shock, or brittle effects.",
-      "spawn_weights": [["shield", 1000], ["body_armour", 1000], ["caster", 1000], ["default", 1000]]
+      "spawn_weights": [
+        [
+          "shield",
+          1000
+        ],
+        [
+          "body_armour",
+          1000
+        ],
+        [
+          "caster",
+          1000
+        ],
+        [
+          "default",
+          1000
+        ]
+      ],
+      "stat_texts": [
+        "+35-37% increased Effect of Non-Damaging Ailments"
+      ],
+      "stat_ranges": [
+        [
+          35,
+          37
+        ]
+      ]
     },
     {
       "name": "+(38-42)% to Lightning Resistance",
       "type": "suffix",
-      "item_classes": ["Shield", "Body Armour"],
+      "item_classes": [
+        "Shield",
+        "Body Armour"
+      ],
       "required_tags": [],
       "level": 60,
       "methods": [
@@ -94,12 +226,37 @@
         "Essence of Wrath guarantees a Lightning Resistance suffix"
       ],
       "notes": "Use the crafting bench as a stopgap if chasing more premium suffixes.",
-      "spawn_weights": [["shield", 1000], ["body_armour", 1000], ["default", 1000]]
+      "spawn_weights": [
+        [
+          "shield",
+          1000
+        ],
+        [
+          "body_armour",
+          1000
+        ],
+        [
+          "default",
+          1000
+        ]
+      ],
+      "stat_texts": [
+        "+38-42% to Lightning Resistance"
+      ],
+      "stat_ranges": [
+        [
+          38,
+          42
+        ]
+      ]
     },
     {
       "name": "+(17-19)% chance to Avoid Elemental Ailments",
       "type": "suffix",
-      "item_classes": ["Shield", "Body Armour"],
+      "item_classes": [
+        "Shield",
+        "Body Armour"
+      ],
       "required_tags": [],
       "level": 75,
       "methods": [
@@ -108,7 +265,29 @@
         "Veiled modifier from Betrayal (Aisling) upgraded for higher values"
       ],
       "notes": "Pair with other ailment avoidance sources to reach 100%.",
-      "spawn_weights": [["shield", 1000], ["body_armour", 1000], ["default", 1000]]
+      "spawn_weights": [
+        [
+          "shield",
+          1000
+        ],
+        [
+          "body_armour",
+          1000
+        ],
+        [
+          "default",
+          1000
+        ]
+      ],
+      "stat_texts": [
+        "+17-19% chance to Avoid Elemental Ailments"
+      ],
+      "stat_ranges": [
+        [
+          17,
+          19
+        ]
+      ]
     }
   ]
 }

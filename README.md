@@ -6,9 +6,10 @@ This prototype provides an offline, data-driven helper that assembles step-by-st
 
 * Desktop interface built with Tkinter so you can browse bases, review affix requirements, and build a plan without memorising the entire database.
 * Affix browser that mirrors in-game availability by applying RePoE spawn weights, so the **Only show compatible** toggle now reflects the true mod pool for the selected base.
+* Human-readable stat descriptions and alteration odds for every mod, translated from RePoE's stat data so you instantly understand what each affix does and how rare it is.
 * A Path of Exile-inspired dark theme with gilded highlights to make the planner feel native to Wraeclast instead of a plain console utility.
 * Rich-styled console interface (optional) that mimics the gilded Path of Exile aesthetic while guiding you through base and modifier selection.
-* Interactive planner that highlights deterministic crafting options before probabilistic gambles.
+* Interactive planner that now includes a progress tracker, currency recommendations, and real spawn-weight math instead of generic "spam Alterations" advice.
 * Curated base list limited to armour, jewellery, and weapon/off-hand classes so you are not overwhelmed by quest items or crafting-irrelevant clutter.
 * Optional integration with the full RePoE dataset for thousands of bases and mods.
 * Extensible local JSON fallback (`data/affixes.json`) for custom notes or private league tweaks.
@@ -44,7 +45,7 @@ If you see `'pip' is not recognized` on Windows, using `py -m pip ...` (or `pyth
      python tools/import_repoe.py --download
      ```
 
-     The script downloads the latest RePoE snapshot and extracts the required JSON files into `data/repoe/`.
+     The script downloads the latest RePoE snapshot and extracts the required JSON files (including stat translations for readable mod text) into `data/repoe/`.
    * Already have RePoE locally? Point the importer at the `data` folder:
 
      ```bash
@@ -64,7 +65,8 @@ If you see `'pip' is not recognized` on Windows, using `py -m pip ...` (or `pyth
 
 4. **Build your item**
    * In the GUI, pick a base from the left column to review its tags, influence, and crafting tips.
-  * Browse compatible affixes (or toggle the checkbox to explore every mod). Compatibility now evaluates the same spawn-weight logic used by the game, so influenced or tag-gated modifiers appear exactly when their prerequisites are met. Double-click to add them to your prefix/suffix wishlist, then press **Generate plan**.
+  * Browse compatible affixes (or toggle the checkbox to explore every mod). Each entry shows its stat text, spawn weighting snippet, and alteration odds, so you can compare options before committing. Double-click to add them to your prefix/suffix wishlist, then press **Generate plan**.
+  * Generated plans now start with a checklist you can tick off in-game, followed by step-by-step instructions that call out deterministic crafting options, recommended currencies, and the actual 1-in-X odds for Alteration attempts.
    * Prefer the CLI? Follow the prompts to enter the numeric choices and receive the plan in stylised panels.
 
 ## Build a Windows executable

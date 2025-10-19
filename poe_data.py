@@ -130,6 +130,8 @@ class Affix:
     methods: List[str]
     notes: str
     spawn_weights: List[Tuple[str, int]]
+    stat_texts: List[str]
+    stat_ranges: List[Tuple[int, int]]
 
     @classmethod
     def from_dict(cls, payload: dict) -> "Affix":
@@ -146,7 +148,139 @@ class Affix:
                 for entry in payload.get("spawn_weights", [])
                 if isinstance(entry, (list, tuple)) and len(entry) == 2
             ],
+            stat_texts=list(payload.get("stat_texts", [])),
+            stat_ranges=[
+                (int(range_pair[0]), int(range_pair[1]))
+                for range_pair in payload.get("stat_ranges", [])
+                if isinstance(range_pair, (list, tuple)) and len(range_pair) == 2
+            ],
         )
+
+
+@dataclass
+class AffixChance:
+    """Represents the likelihood of rolling an affix within a mod pool."""
+
+    weight: int
+    total_weight: int
+
+    @property
+    def chance(self) -> float:
+        if self.total_weight <= 0:
+            return 0.0
+        return self.weight / self.total_weight
+
+    @property
+    def expected_rolls(self) -> float:
+        if self.weight <= 0:
+            return float("inf")
+        return self.total_weight / self.weight
+
+
+class StatTranslator:
+    """Translate RePoE stat blocks into human-readable text."""
+
+    def __init__(self, entries: Sequence[dict]):
+        self._by_length: Dict[int, List[dict]] = {}
+        for entry in entries:
+            ids = []
+            for spec in entry.get("ids", []):
+                if isinstance(spec, str):
+                    ids.append(spec)
+                else:
+                    ids.append(spec.get("id", ""))
+            if not ids:
+                continue
+            entry = dict(entry)
+            entry["_ids"] = tuple(ids)
+            self._by_length.setdefault(len(ids), []).append(entry)
+
+    def translate(self, stats: Sequence[dict]) -> List[str]:
+        if not stats:
+            return []
+        ids = tuple(stat.get("id", "") for stat in stats)
+        candidates = self._by_length.get(len(ids), [])
+        for entry in candidates:
+            if entry.get("_ids") != ids:
+                continue
+            lines = []
+            for variant in entry.get("English", []):
+                if self._conditions_match(variant.get("condition", []), stats):
+                    lines.append(self._format_variant(variant, stats))
+            if lines:
+                return lines
+        # fall back to simple humanisation when translation is unavailable
+        return [self._fallback(stat) for stat in stats]
+
+    @staticmethod
+    def _conditions_match(conditions: Sequence[dict], stats: Sequence[dict]) -> bool:
+        if not conditions:
+            return True
+        padded = list(conditions) + [{}] * (len(stats) - len(conditions))
+        for condition, stat in zip(padded, stats):
+            if not condition:
+                continue
+            value = StatTranslator._stat_value(stat)
+            if "min" in condition and value < condition["min"]:
+                return False
+            if "max" in condition and value > condition["max"]:
+                return False
+            if condition.get("negated") and value >= 0:
+                return False
+        return True
+
+    @staticmethod
+    def _format_variant(variant: dict, stats: Sequence[dict]) -> str:
+        template = variant.get("string", "")
+        formats = list(variant.get("format", []))
+        formatted: List[str] = []
+        for index, stat in enumerate(stats):
+            fmt = formats[index] if index < len(formats) else "#"
+            formatted.append(StatTranslator._format_value(stat, fmt))
+        return template.format(*formatted)
+
+    @staticmethod
+    def _format_value(stat: dict, fmt: str) -> str:
+        value_min = StatTranslator._coerce_number(stat.get("min", 0))
+        value_max = StatTranslator._coerce_number(stat.get("max", value_min))
+        if fmt == "ignore":
+            return ""
+        show_sign = fmt == "+#"
+        if value_min == value_max:
+            prefix = "+" if show_sign and value_max >= 0 else ""
+            return f"{prefix}{value_max}"
+        if show_sign:
+            prefix = "+" if value_max >= 0 else ""
+            return f"{prefix}{value_min}–{value_max}"
+        return f"{value_min}–{value_max}"
+
+    @staticmethod
+    def _coerce_number(value: object) -> int:
+        if isinstance(value, (int, float)):
+            return int(round(value))
+        try:
+            return int(value)
+        except Exception:
+            return 0
+
+    @staticmethod
+    def _stat_value(stat: dict) -> int:
+        value_min = StatTranslator._coerce_number(stat.get("min", 0))
+        value_max = StatTranslator._coerce_number(stat.get("max", value_min))
+        if value_min == value_max:
+            return value_min
+        if abs(value_max) >= abs(value_min):
+            return value_max
+        return value_min
+
+    @staticmethod
+    def _fallback(stat: dict) -> str:
+        stat_id = str(stat.get("id", "unknown_stat")).replace("_", " ")
+        value_min = StatTranslator._coerce_number(stat.get("min", 0))
+        value_max = StatTranslator._coerce_number(stat.get("max", value_min))
+        if value_min == value_max:
+            return f"{value_min} {stat_id}".strip()
+        return f"{value_min}–{value_max} {stat_id}".strip()
 
 
 class CraftingDataset:
@@ -165,6 +299,7 @@ class CraftingDataset:
         self._bases: List[BaseItem] = []
         self._affixes: List[Affix] = []
         self._source_used: str = "unknown"
+        self._stat_translator: Optional[StatTranslator] = None
         self._load()
 
     @property
@@ -206,6 +341,7 @@ class CraftingDataset:
         payload = json.loads(self.sample_path.read_text(encoding="utf8"))
         bases = [BaseItem.from_dict(entry) for entry in payload.get("bases", [])]
         affixes = [Affix.from_dict(entry) for entry in payload.get("affixes", [])]
+        self._stat_translator = None
         self._assign_filtered_payload(bases, affixes)
 
     def _load_repoe(self) -> None:
@@ -220,8 +356,18 @@ class CraftingDataset:
         base_payload: Dict[str, dict] = json.loads(base_items_file.read_text(encoding="utf8"))
         mod_payload: Dict[str, dict] = json.loads(mods_file.read_text(encoding="utf8"))
 
+        translator: Optional[StatTranslator] = None
+        translations_file = self.repo_dir / "stat_translations.min.json"
+        if translations_file.exists():
+            try:
+                entries = json.loads(translations_file.read_text(encoding="utf8"))
+                translator = StatTranslator(entries)
+            except Exception:
+                translator = None
+        self._stat_translator = translator
+
         bases, tag_lookup = self._convert_repoe_bases(base_payload)
-        affixes = self._convert_repoe_affixes(mod_payload, tag_lookup)
+        affixes = self._convert_repoe_affixes(mod_payload, tag_lookup, translator)
 
         self._assign_filtered_payload(bases, affixes)
 
@@ -266,6 +412,7 @@ class CraftingDataset:
         self,
         payload: Dict[str, dict],
         base_lookup: Dict[str, Tuple[str, Sequence[str]]],
+        translator: Optional[StatTranslator],
     ) -> List[Affix]:
         affixes: List[Affix] = []
         base_tags = list(base_lookup.values())
@@ -312,6 +459,9 @@ class CraftingDataset:
             methods = self._heuristic_methods(entry, spawn_tags, affix_type)
             notes = self._derive_affix_notes(entry)
 
+            stats = entry.get("stats", []) or []
+            stat_texts, stat_ranges = self._translate_stats(stats, translator)
+
             spawn_weights = []
             for weight_entry in entry.get("spawn_weights", []) or []:
                 tag = weight_entry.get("tag")
@@ -330,6 +480,8 @@ class CraftingDataset:
                     methods=methods,
                     notes=notes,
                     spawn_weights=spawn_weights,
+                    stat_texts=stat_texts,
+                    stat_ranges=stat_ranges,
                 )
             )
 
@@ -346,6 +498,22 @@ class CraftingDataset:
         self._normalize_spawn_weights(filtered_affixes)
         self._bases = sorted(filtered_bases, key=lambda base: (base.item_class, base.name))
         self._affixes = sorted(filtered_affixes, key=lambda affix: (affix.type, affix.name))
+
+    def _translate_stats(
+        self, stats: Sequence[dict], translator: Optional[StatTranslator]
+    ) -> Tuple[List[str], List[Tuple[int, int]]]:
+        if not stats:
+            return [], []
+        stat_ranges: List[Tuple[int, int]] = []
+        for entry in stats:
+            minimum = StatTranslator._coerce_number(entry.get("min", 0))
+            maximum = StatTranslator._coerce_number(entry.get("max", minimum))
+            stat_ranges.append((minimum, maximum))
+        if translator:
+            stat_texts = translator.translate(stats)
+        else:
+            stat_texts = [StatTranslator._fallback(entry) for entry in stats]
+        return stat_texts, stat_ranges
 
     def _normalize_affix_tags(self, affixes: Sequence[Affix]) -> None:
         """Normalize affix tag requirements without discarding gating rules."""
@@ -537,6 +705,39 @@ class CraftingDataset:
     ) -> List[Affix]:
         """Return affixes compatible with an item class and optional tags."""
 
+        normalized_class, tag_set, base_tokens = self._build_base_context(item_class, tags)
+        return list(
+            self._iter_compatible_affixes(normalized_class, tag_set, base_tokens, affix_type)
+        )
+
+    def affix_roll_statistics(self, base: BaseItem, affix: Affix) -> Optional[AffixChance]:
+        """Compute spawn weight share for a given affix on a base."""
+
+        normalized_class, tag_set, base_tokens = self._build_base_context(
+            base.item_class, base.tags
+        )
+        if not affix.spawn_weights:
+            return None
+
+        pool_weight = 0
+        target_weight = 0
+        for candidate in self._iter_compatible_affixes(
+            normalized_class, tag_set, base_tokens, affix.type
+        ):
+            weight = self._effective_spawn_weight(candidate, tag_set, base_tokens)
+            if weight <= 0:
+                continue
+            pool_weight += weight
+            if candidate.name == affix.name:
+                target_weight = weight
+
+        if target_weight <= 0 or pool_weight <= 0:
+            return None
+        return AffixChance(weight=target_weight, total_weight=pool_weight)
+
+    def _build_base_context(
+        self, item_class: str, tags: Optional[Iterable[str]]
+    ) -> Tuple[str, Set[str], Set[str]]:
         normalized_class = self._normalize_class(item_class or "")
         tag_set = {self._normalize_tag(tag) for tag in (tags or []) if tag}
         tag_set.discard("")
@@ -545,34 +746,29 @@ class CraftingDataset:
         if normalized_class:
             tag_set.add(normalized_class)
 
-        token_cache: Dict[str, Set[str]] = {}
-
-        def get_tokens(value: str) -> Set[str]:
-            if value not in token_cache:
-                token_cache[value] = self._tokenize(value)
-            return token_cache[value]
-
         base_tokens: Set[str] = set()
         for tag in tag_set:
-            base_tokens.update(get_tokens(tag))
-        base_tokens.update(self._tokenize(item_class))
+            base_tokens.update(self._tokenize(tag))
+        base_tokens.update(self._tokenize(item_class or ""))
+        return normalized_class, tag_set, base_tokens
 
-        results: List[Affix] = []
+    def _iter_compatible_affixes(
+        self,
+        normalized_class: str,
+        tag_set: Set[str],
+        base_tokens: Set[str],
+        affix_type: Optional[str],
+    ) -> Iterable[Affix]:
         for affix in self._affixes:
             if affix_type and affix.type.lower() != affix_type.lower():
                 continue
-
             if not self._matches_item_class(affix, normalized_class, base_tokens):
                 continue
-
             if not self._matches_required_tags(affix, tag_set, base_tokens):
                 continue
-
             if not self._matches_spawn_weights(affix, tag_set, base_tokens):
                 continue
-
-            results.append(affix)
-        return results
+            yield affix
 
     def _matches_item_class(
         self, affix: Affix, normalized_class: str, base_tokens: Set[str]
@@ -607,6 +803,11 @@ class CraftingDataset:
     ) -> bool:
         if not affix.spawn_weights:
             return True
+        return self._effective_spawn_weight(affix, tag_set, base_tokens) > 0
+
+    def _effective_spawn_weight(
+        self, affix: Affix, tag_set: Set[str], base_tokens: Set[str]
+    ) -> int:
         total_weight = 0
         for tag, weight in affix.spawn_weights:
             if weight <= 0:
@@ -617,7 +818,7 @@ class CraftingDataset:
             tokens = self._tokenize(tag)
             if tokens and tokens.issubset(base_tokens):
                 total_weight += weight
-        return total_weight > 0
+        return total_weight
 
     @staticmethod
     def _normalize_aliases(value: str) -> str:
@@ -667,4 +868,4 @@ class CraftingDataset:
         return token
 
 
-__all__ = ["CraftingDataset", "BaseItem", "Affix"]
+__all__ = ["CraftingDataset", "BaseItem", "Affix", "AffixChance"]
