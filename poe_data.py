@@ -298,6 +298,9 @@ class CraftingDataset:
                     if weight_entry.get("weight", 0) > 0 and weight_entry.get("tag") not in {"default"}
                 }
             spawn_tags = {tag for tag in spawn_tags if not tag.startswith("no_")}
+            if domain == "item" and not spawn_tags:
+                # Skip legacy/internal mods that cannot naturally spawn on relevant items.
+                continue
 
             allowed_classes = self._infer_allowed_item_classes(spawn_tags, base_tags)
             methods = self._heuristic_methods(entry, spawn_tags, affix_type)
@@ -324,33 +327,23 @@ class CraftingDataset:
         filtered_bases = self._filter_relevant_bases(bases)
         allowed_classes = {base.item_class for base in filtered_bases}
         filtered_affixes = self._filter_relevant_affixes(affixes, allowed_classes)
-        allowed_tags = {
-            self._normalize_tag(tag) for base in filtered_bases for tag in base.tags
-        }
-        self._normalize_affix_tags(filtered_affixes, allowed_tags)
+        self._normalize_affix_tags(filtered_affixes)
         self._bases = sorted(filtered_bases, key=lambda base: (base.item_class, base.name))
         self._affixes = sorted(filtered_affixes, key=lambda affix: (affix.type, affix.name))
 
-    def _normalize_affix_tags(
-        self, affixes: Sequence[Affix], allowed_tags: Set[str]
-    ) -> None:
-        """Trim affix tag requirements to those present on our filtered bases."""
-
-        if not allowed_tags:
-            return
+    def _normalize_affix_tags(self, affixes: Sequence[Affix]) -> None:
+        """Normalize affix tag requirements without discarding gating rules."""
 
         for affix in affixes:
             if not affix.required_tags:
                 continue
-            trimmed = {
-                tag
-                for tag in affix.required_tags
-                if self._normalize_tag(tag) in allowed_tags
-            }
-            if trimmed:
-                affix.required_tags = sorted(trimmed)
-            else:
-                affix.required_tags = []
+            normalised: List[str] = []
+            for tag in affix.required_tags:
+                normalised_tag = self._normalize_tag(tag)
+                if not normalised_tag or normalised_tag in normalised:
+                    continue
+                normalised.append(normalised_tag)
+            affix.required_tags = normalised
 
     def _filter_relevant_bases(self, bases: Sequence[BaseItem]) -> List[BaseItem]:
         filtered: List[BaseItem] = []
@@ -527,20 +520,23 @@ class CraftingDataset:
             matches_class = (
                 not affix.item_classes
                 or any(norm == "universal" for norm in class_norms)
-                or item_class_norm and item_class_norm in class_norms
-                or any(
-                    item_class_norm and norm and (item_class_norm in norm or norm in item_class_norm)
-                    for norm in class_norms
-                )
+                or (item_class_norm and item_class_norm in class_norms)
             )
             if not matches_class and item_tokens:
                 affix_token_sets = [self._tokenize(token) for token in affix.item_classes]
-                matches_class = any(item_tokens & tokens for tokens in affix_token_sets if tokens)
-            if matches_class:
-                results.append(affix)
-                continue
+                matches_class = any(
+                    item_tokens == tokens or item_tokens.issuperset(tokens)
+                    for tokens in affix_token_sets
+                    if tokens
+                )
+
             required = {self._normalize_tag(tag) for tag in affix.required_tags if tag}
-            if required and tag_set.issuperset(required):
+            matches_tags = not required or tag_set.issuperset(required)
+
+            if matches_class and matches_tags:
+                results.append(affix)
+            elif matches_tags and not affix.item_classes:
+                # Some mods gate purely on tags (e.g. jewel implicits).
                 results.append(affix)
         return results
 

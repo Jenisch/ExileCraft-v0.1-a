@@ -167,6 +167,20 @@ class CraftingApp(tk.Tk):
             foreground=[("disabled", palette["muted"])],
         )
         style.configure(
+            "PoE.TCombobox",
+            fieldbackground=palette["panel"],
+            background=palette["panel"],
+            foreground=palette["text"],
+            bordercolor=palette["border"],
+            borderwidth=1,
+            arrowcolor=palette["accent"],
+        )
+        style.map(
+            "PoE.TCombobox",
+            fieldbackground=[("readonly", palette["panel"]), ("focus", palette["focus"])],
+            foreground=[("disabled", palette["muted"])],
+        )
+        style.configure(
             "PoE.Vertical.TScrollbar",
             background=palette["panel"],
             troughcolor=palette["surface"],
@@ -368,6 +382,8 @@ class CraftingApp(tk.Tk):
         top_row = ttk.Frame(affix_panel, style="PoE.TFrame")
         top_row.grid(row=0, column=0, sticky="ew", padx=6, pady=6)
         top_row.columnconfigure(0, weight=1)
+        top_row.columnconfigure(1, weight=0)
+        top_row.columnconfigure(2, weight=0)
 
         self.affix_filter_var = tk.StringVar()
         affix_search = ttk.Entry(top_row, textvariable=self.affix_filter_var, style="PoE.TEntry")
@@ -383,6 +399,24 @@ class CraftingApp(tk.Tk):
             command=self._refresh_affixes,
             style="PoE.TCheckbutton",
         ).grid(row=0, column=1, padx=(6, 0))
+
+        self.affix_type_filter = tk.StringVar(value="All mods")
+        type_filter = ttk.Combobox(
+            top_row,
+            textvariable=self.affix_type_filter,
+            values=("All mods", "Prefix mods", "Suffix mods"),
+            state="readonly",
+            width=14,
+            style="PoE.TCombobox",
+        )
+        type_filter.grid(row=0, column=2, padx=(6, 0))
+        type_filter.current(0)
+        type_filter.bind("<<ComboboxSelected>>", lambda *_: self._refresh_affixes())
+
+        info_row = ttk.Frame(affix_panel, style="PoE.TFrame")
+        info_row.grid(row=1, column=0, columnspan=2, sticky="ew", padx=6, pady=(0, 6))
+        self.affix_count = ttk.Label(info_row, text="0 affixes", style="PoE.Subtle.TLabel")
+        self.affix_count.pack(side="left")
 
         columns = ("type", "level", "methods")
         self.affix_tree = ttk.Treeview(
@@ -560,6 +594,12 @@ class CraftingApp(tk.Tk):
         else:
             affixes = list(self.dataset.affixes)
 
+        kind_filter = self.affix_type_filter.get().lower()
+        if kind_filter.startswith("prefix"):
+            affixes = [affix for affix in affixes if affix.type.lower() == "prefix"]
+        elif kind_filter.startswith("suffix"):
+            affixes = [affix for affix in affixes if affix.type.lower() == "suffix"]
+
         query = self.affix_filter_var.get().strip().lower()
         if query and not query.startswith("search"):
             if query.startswith("type:"):
@@ -582,6 +622,7 @@ class CraftingApp(tk.Tk):
                 ]
 
         self.current_affixes = affixes
+        affixes.sort(key=lambda affix: (affix.type, affix.level, affix.name))
         self.affix_tree.delete(*self.affix_tree.get_children())
         self.affix_rows.clear()
         for affix in affixes:
@@ -594,6 +635,7 @@ class CraftingApp(tk.Tk):
             )
             self.affix_rows[item_id] = affix
 
+        self.affix_count.configure(text=f"{len(affixes)} affixes shown")
         self._set_text(self.affix_details, "Select an affix to see details.")
 
     def _show_affix_details(self, event) -> None:
@@ -604,11 +646,11 @@ class CraftingApp(tk.Tk):
         if not affix:
             return
         lines = [
-            f"Name: {affix.name}",
+            f"Affix: {affix.name}",
             f"Type: {affix.type.title()}",
-            f"Required level: {affix.level}",
-            f"Matches classes: {', '.join(affix.item_classes) or 'Any'}",
-            f"Requires tags: {', '.join(affix.required_tags) or 'None'}",
+            f"Item level: {affix.level}+",
+            f"Applies to: {', '.join(affix.item_classes) or 'Any item with matching tags'}",
+            f"Requires tags: {self._format_tags(affix.required_tags) or 'None'}",
             "",
             "Acquisition:",
         ]
@@ -619,6 +661,11 @@ class CraftingApp(tk.Tk):
             lines.append("Notes:")
             lines.append(textwrap.fill(affix.notes, width=70))
         self._set_text(self.affix_details, "\n".join(lines))
+
+    @staticmethod
+    def _format_tags(tags: List[str]) -> str:
+        pretty = [tag.replace("_", " ").title() for tag in tags if tag]
+        return ", ".join(pretty)
 
     def _quick_add_affix(self, _event) -> None:
         selection = self.affix_tree.selection()
