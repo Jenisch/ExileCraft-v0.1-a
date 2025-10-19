@@ -1,13 +1,15 @@
-"""Data loading utilities for the local Path of Exile crafting dataset."""
+"""Data loading utilities for Path of Exile crafting information."""
 from __future__ import annotations
 
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Iterable, List, Optional
+from typing import Dict, Iterable, List, Optional, Sequence, Tuple
 import json
 
 
-DATA_PATH = Path(__file__).parent / "data" / "affixes.json"
+ROOT = Path(__file__).parent
+SAMPLE_DATA_PATH = ROOT / "data" / "affixes.json"
+REPOE_DATA_DIR = ROOT / "data" / "repoe"
 
 
 @dataclass
@@ -59,22 +61,257 @@ class Affix:
 
 
 class CraftingDataset:
-    """Loads and provides lookup helpers for the local crafting data."""
+    """Loads and provides lookup helpers for crafting data."""
 
-    def __init__(self, path: Optional[Path] = None) -> None:
-        self.path = path or DATA_PATH
+    def __init__(
+        self,
+        source: str = "auto",
+        *,
+        repo_dir: Optional[Path] = None,
+        sample_path: Optional[Path] = None,
+    ) -> None:
+        self.requested_source = source
+        self.repo_dir = repo_dir or REPOE_DATA_DIR
+        self.sample_path = sample_path or SAMPLE_DATA_PATH
         self._bases: List[BaseItem] = []
         self._affixes: List[Affix] = []
+        self._source_used: str = "unknown"
         self._load()
 
+    @property
+    def source(self) -> str:
+        """Return the data source that ended up being loaded."""
+
+        return self._source_used
+
     def _load(self) -> None:
-        if not self.path.exists():
-            raise FileNotFoundError(
-                f"Crafting dataset missing at {self.path}. Provide affixes.json to continue."
+        loaders = {
+            "repoe": self._load_repoe,
+            "sample": self._load_sample,
+        }
+        if self.requested_source == "auto":
+            try:
+                self._load_repoe()
+                self._source_used = "repoe"
+                return
+            except FileNotFoundError:
+                pass
+            self._load_sample()
+            self._source_used = "sample"
+            return
+
+        loader = loaders.get(self.requested_source)
+        if not loader:
+            raise ValueError(
+                "source must be one of {'auto', 'repoe', 'sample'} but "
+                f"received '{self.requested_source}'"
             )
-        payload = json.loads(self.path.read_text(encoding="utf8"))
+        loader()
+        self._source_used = self.requested_source
+
+    def _load_sample(self) -> None:
+        if not self.sample_path.exists():
+            raise FileNotFoundError(
+                f"Crafting dataset missing at {self.sample_path}. Provide affixes.json to continue."
+            )
+        payload = json.loads(self.sample_path.read_text(encoding="utf8"))
         self._bases = [BaseItem.from_dict(entry) for entry in payload.get("bases", [])]
         self._affixes = [Affix.from_dict(entry) for entry in payload.get("affixes", [])]
+
+    def _load_repoe(self) -> None:
+        base_items_file = self.repo_dir / "base_items.min.json"
+        mods_file = self.repo_dir / "mods.min.json"
+        if not base_items_file.exists() or not mods_file.exists():
+            raise FileNotFoundError(
+                "RePoE dataset not found. Run `python tools/import_repoe.py --download` or "
+                "import your own RePoE data first."
+            )
+
+        base_payload: Dict[str, dict] = json.loads(base_items_file.read_text(encoding="utf8"))
+        mod_payload: Dict[str, dict] = json.loads(mods_file.read_text(encoding="utf8"))
+
+        bases, tag_lookup = self._convert_repoe_bases(base_payload)
+        affixes = self._convert_repoe_affixes(mod_payload, tag_lookup)
+
+        self._bases = bases
+        self._affixes = affixes
+
+    def _convert_repoe_bases(
+        self, payload: Dict[str, dict]
+    ) -> Tuple[List[BaseItem], Dict[str, Tuple[str, Sequence[str]]]]:
+        bases: List[BaseItem] = []
+        tag_lookup: Dict[str, Tuple[str, Sequence[str]]] = {}
+        for base_id, entry in payload.items():
+            name = entry.get("name")
+            item_class = entry.get("item_class", "Unknown")
+            tags = list(entry.get("tags", []))
+            if not name or item_class == "Hideout Doodads":
+                continue
+
+            influence = [
+                self._format_influence(tag)
+                for tag in tags
+                if tag.endswith("_item") and tag not in {"default_item", "not_for_sale_item"}
+            ]
+            influence = [inf for inf in influence if inf]
+
+            notes = entry.get("flavour_text", "") or ""
+            craft_tips = self._derive_base_tips(tags)
+
+            bases.append(
+                BaseItem(
+                    name=name,
+                    item_class=item_class,
+                    tags=tags,
+                    influence=influence,
+                    notes=notes,
+                    craft_tips=craft_tips,
+                )
+            )
+            tag_lookup[base_id] = (item_class, tags)
+
+        bases.sort(key=lambda base: base.name)
+        return bases, tag_lookup
+
+    def _convert_repoe_affixes(
+        self,
+        payload: Dict[str, dict],
+        base_lookup: Dict[str, Tuple[str, Sequence[str]]],
+    ) -> List[Affix]:
+        affixes: List[Affix] = []
+        base_tags = list(base_lookup.values())
+        for mod_id, entry in payload.items():
+            generation_type = entry.get("generation_type")
+            if generation_type not in (1, 2):
+                continue
+            name = entry.get("name") or entry.get("generation_weight_tag", "")
+            if not name:
+                # skip meta/internal mods without exposed names
+                continue
+            affix_type = "prefix" if generation_type == 1 else "suffix"
+            required_level = int(entry.get("required_level", 1) or 1)
+
+            spawn_tags = set(entry.get("spawn_tags", []))
+            if not spawn_tags:
+                spawn_tags = {
+                    weight_entry["tag"]
+                    for weight_entry in entry.get("spawn_weights", [])
+                    if weight_entry.get("weight", 0) > 0 and weight_entry.get("tag") not in {"default"}
+                }
+            spawn_tags = {tag for tag in spawn_tags if not tag.startswith("no_")}
+
+            allowed_classes = self._infer_allowed_item_classes(spawn_tags, base_tags)
+            methods = self._heuristic_methods(entry, spawn_tags, affix_type)
+            notes = self._derive_affix_notes(entry)
+
+            affixes.append(
+                Affix(
+                    name=name,
+                    type=affix_type,
+                    item_classes=allowed_classes or ["Universal"],
+                    required_tags=sorted(spawn_tags),
+                    level=required_level,
+                    methods=methods,
+                    notes=notes,
+                )
+            )
+
+        affixes.sort(key=lambda affix: (affix.type, affix.name))
+        return affixes
+
+    def _infer_allowed_item_classes(
+        self,
+        spawn_tags: Sequence[str],
+        base_tags: Sequence[Tuple[str, Sequence[str]]],
+    ) -> List[str]:
+        if not spawn_tags:
+            return []
+        allowed: List[str] = []
+        required = set(spawn_tags)
+        for item_class, tags in base_tags:
+            if required.issubset(tags):
+                allowed.append(item_class)
+        seen = set()
+        ordered: List[str] = []
+        for item_class in allowed:
+            if item_class not in seen:
+                ordered.append(item_class)
+                seen.add(item_class)
+        return ordered
+
+    def _heuristic_methods(
+        self,
+        mod_entry: Dict[str, object],
+        spawn_tags: Sequence[str],
+        affix_type: str,
+    ) -> List[str]:
+        methods: List[str] = []
+        name = str(mod_entry.get("name", ""))
+        mod_type = str(mod_entry.get("type", ""))
+
+        if "Essence" in mod_type or "Essence" in name:
+            methods.append("Apply the matching Essence on a clean item until it hits.")
+        if "Delve" in mod_type or "delve" in mod_type.lower():
+            methods.append("Target farm in Delve nodes or use Jagged/Corroded/Pristine fossils as appropriate.")
+        if "Synthesis" in mod_type or "synthesised" in name.lower():
+            methods.append("Combine Synthesised implicit bases or use Fractured bases to elevate odds.")
+
+        if not methods:
+            thematic = None
+            for tag in ("attack", "caster", "minion", "speed", "defences", "ailment"):
+                if tag in spawn_tags:
+                    thematic = tag
+                    break
+            if thematic:
+                methods.append(
+                    f"Use Harvest Reforge {thematic} or Deafening Essences that roll {thematic} modifiers."
+                )
+
+        if not methods:
+            methods.append(
+                f"Spam alterations/regals on an ilvl {mod_entry.get('required_level', 1)}+ base and finish with metacrafts."
+            )
+
+        if affix_type == "prefix" and "influence" in spawn_tags:
+            methods.append("Leverage Awakener's Orbs or Synthesised bases to guarantee influenced prefixes.")
+        elif affix_type == "suffix" and "influence" in spawn_tags:
+            methods.append("Use Maven orbs and Harvest reforge keep prefixes to secure influenced suffixes.")
+
+        return methods
+
+    def _derive_affix_notes(self, mod_entry: Dict[str, object]) -> str:
+        if mod_entry.get("is_essence_only"):
+            return "Only available from matching Essence tiers."
+        if mod_entry.get("is_veiled"):
+            return "Appears via Betrayal unveils."
+        tags = mod_entry.get("tags", []) or []
+        if "atlas_base_type" in tags:
+            return "Only available on Atlas base types."
+        return ""
+
+    def _format_influence(self, tag: str) -> str:
+        pretty = tag.replace("_item", "").replace("_", " ")
+        pretty = pretty.title()
+        if pretty == "Shaper":
+            return "Shaper"
+        if pretty == "Elder":
+            return "Elder"
+        if pretty.endswith(" Item"):
+            return pretty[:-5]
+        return pretty
+
+    def _derive_base_tips(self, tags: Sequence[str]) -> List[str]:
+        tips: List[str] = []
+        tag_set = set(tags)
+        if "two_hand_weapon" in tag_set or "staff" in tag_set:
+            tips.append("Aim for 30% quality using Perfect Fossils before serious crafting.")
+        if "caster" in tag_set:
+            tips.append("Harvest Reforge Caster is a strong way to force caster prefixes.")
+        if "attack" in tag_set:
+            tips.append("Use Deafening Essences of Contempt/Zeal/Anger depending on desired attack affixes.")
+        if {"armour", "evasion", "energy_shield"} & tag_set:
+            tips.append("Balance suffixes with Eldritch Ichors/Embers for additional defences.")
+        return tips
 
     @property
     def bases(self) -> List[BaseItem]:
@@ -103,9 +340,9 @@ class CraftingDataset:
         tags = set(tags or [])
         results: List[Affix] = []
         for affix in self._affixes:
-            if item_class not in affix.item_classes:
-                continue
             if affix_type and affix.type != affix_type:
+                continue
+            if affix.item_classes and item_class not in affix.item_classes and "Universal" not in affix.item_classes:
                 continue
             if affix.required_tags and not tags.issuperset(affix.required_tags):
                 continue

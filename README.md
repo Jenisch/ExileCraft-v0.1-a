@@ -1,12 +1,23 @@
 # ExileCraft v0.1-a
 
-This prototype provides an offline, data-driven helper that assembles step-by-step Path of Exile crafting plans from a small curated dataset. It is intentionally lightweight so that you can extend the JSON data or heuristics without contacting external services.
+This prototype provides an offline, data-driven helper that assembles step-by-step Path of Exile crafting plans. It now supports importing the full [RePoE](https://github.com/brather1ng/RePoE) database so you can browse every base and affix, while still shipping with a lightweight sample dataset for quick experiments.
 
 ## Features
 
-* Interactive CLI that lets you pick a base item and desired prefixes/suffixes and outputs a human-readable crafting walkthrough.
-* Simple heuristics that prioritise deterministic crafting techniques (Harvest augments, Essences, bench crafts) before probabilistic options.
-* Extensible local dataset (`data/affixes.json`) containing example bases and mods with notes and acquisition tips.
+* Rich-styled interface that mimics the gilded Path of Exile aesthetic while guiding you through base and modifier selection.
+* Interactive planner that highlights deterministic crafting options before probabilistic gambles.
+* Optional integration with the full RePoE dataset for thousands of bases and mods.
+* Extensible local JSON fallback (`data/affixes.json`) for custom notes or private league tweaks.
+
+## Requirements
+
+Install the Python dependencies once inside your environment:
+
+```bash
+pip install rich requests
+```
+
+(If you plan to download the RePoE archive through the helper script, ensure outbound HTTPS access is available.)
 
 ## Usage
 
@@ -14,7 +25,24 @@ This prototype provides an offline, data-driven helper that assembles step-by-st
    * If you're comfortable with Git, clone the repository: `git clone https://github.com/<your-account>/ExileCraft-v0.1-a.git`.
    * Otherwise download the repository as a ZIP (on GitHub use **Code ▸ Download ZIP**) and extract it anywhere on your machine. This keeps the files together so you don't need to copy/paste each script.
 
-2. **Pick a launcher**
+2. **Populate crafting data**
+   * For the complete game database, run:
+
+     ```bash
+     python tools/import_repoe.py --download
+     ```
+
+     The script downloads the latest RePoE snapshot and extracts the required JSON files into `data/repoe/`.
+   * Already have RePoE locally? Point the importer at the `data` folder:
+
+     ```bash
+     python tools/import_repoe.py --source /path/to/RePoE/data
+     ```
+
+     Add `--force` if you want to overwrite an existing import.
+   * Skip this step to try the bundled sample data.
+
+3. **Pick a launcher**
    * Windows: double-click `run_cli.bat` or run it from Command Prompt. The script keeps the window open after the plan is generated so you can read the output.
    * macOS/Linux: run the included shell helper from Terminal:
 
@@ -25,11 +53,14 @@ This prototype provides an offline, data-driven helper that assembles step-by-st
      (If needed, grant execute permission once with `chmod +x run_cli.sh`).
    * Prefer to call Python directly? You can always do `python main.py` (or `python3 main.py`) from the project folder.
 
-3. **Follow the prompts** to pick a base and "check" your desired affixes by entering the numbers shown in the menu. The tool prints the suggested crafting sequence.
+4. **Follow the prompts** to pick a base and highlight your desired affixes by entering the numbers shown in the themed menus. The planner prints the suggested crafting sequence in stylised panels.
 
 ### Extending the dataset
 
-Add more item bases or affixes by editing `data/affixes.json`. Every entry can list:
+* When using RePoE data, edit `data/repoe/base_items.min.json` or `data/repoe/mods.min.json` after import to experiment with custom bases/mods.
+* To ship personal adjustments, continue editing `data/affixes.json`; it remains the fallback when no RePoE data is present.
+
+Every entry can list:
 
 * `item_classes` and `required_tags` to gate mods to the appropriate bases.
 * `methods` with short descriptions of the strategies you want surfaced in the plan.
@@ -39,4 +70,5 @@ After updating the JSON, rerun the CLI to immediately use the new data.
 
 ## Limitations
 
-This repository ships with a very small handcrafted dataset and does not scrape Grinding Gear Games' databases. For authoritative or league-specific information, export the official data and mirror its structure locally before running the planner.
+* The RePoE importer depends on the public GitHub mirror. If the structure changes or network access fails, point the script at a manually downloaded copy instead.
+* The heuristic crafting engine remains intentionally simple; treat the plan as a starting point and adjust for league mechanics or niche interactions.
