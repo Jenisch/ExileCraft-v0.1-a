@@ -1,7 +1,16 @@
 """Rich-styled interface to generate Path of Exile crafting plans."""
 from __future__ import annotations
 
+import importlib.util
+import sys
 from typing import Iterable, List, Sequence
+
+if importlib.util.find_spec("rich") is None:
+    print(
+        "The 'rich' package is required to run ExileCraft. "
+        "Install dependencies with `pip install -r requirements.txt` and try again."
+    )
+    sys.exit(1)
 
 from rich.console import Console
 from rich.panel import Panel
