@@ -18,6 +18,22 @@ def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
         help="launch the original console interface instead of the GUI",
     )
     parser.add_argument(
+        "--web",
+        action="store_true",
+        help="launch the browser interface backed by Flask",
+    )
+    parser.add_argument(
+        "--host",
+        default="127.0.0.1",
+        help="host interface for --web (default: 127.0.0.1)",
+    )
+    parser.add_argument(
+        "--port",
+        type=int,
+        default=5000,
+        help="port for --web (default: 5000)",
+    )
+    parser.add_argument(
         "--data-source",
         choices=["auto", "repoe", "sample"],
         default="auto",
@@ -33,6 +49,13 @@ def main(argv: list[str] | None = None) -> None:
         from cli_app import run_cli
 
         run_cli(source=args.data_source)
+        return
+
+    if args.web:
+        from web_app import create_app
+
+        app = create_app(source=args.data_source)
+        app.run(host=args.host, port=args.port, debug=False)
         return
 
     try:

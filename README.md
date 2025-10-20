@@ -5,6 +5,7 @@ This prototype provides an offline, data-driven helper that assembles step-by-st
 ## Features
 
 * Desktop interface built with Tkinter so you can browse bases, review affix requirements, and build a plan without memorising the entire database.
+* Browser interface served by Flask that mirrors Craft of Exile's emulator layout with live search, compatible-mod toggles, spawn-weight odds, and instant plan generation.
 * Affix browser that mirrors in-game availability by applying RePoE spawn weights, so the **Only show compatible** toggle now reflects the true mod pool for the selected base.
 * Human-readable stat descriptions and alteration odds for every mod, translated from RePoE's stat data so you instantly understand what each affix does and how rare it is.
 * A Path of Exile-inspired dark theme with gilded highlights to make the planner feel native to Wraeclast instead of a plain console utility.
@@ -56,7 +57,11 @@ If you see `'pip' is not recognized` on Windows, using `py -m pip ...` (or `pyth
    * Skip this step to try the bundled sample data.
 
 3. **Launch ExileCraft**
-   * **Graphical interface (recommended):**
+   * **Browser interface (emulator-style):**
+     * Windows: double-click `run_web.bat` or run `py main.py --web`.
+     * macOS/Linux: run `./run_web.sh` (make it executable once via `chmod +x run_web.sh`) or call `python3 main.py --web`.
+     * Then open [http://127.0.0.1:5000](http://127.0.0.1:5000) in your browser. Use `--host`/`--port` if you need a different bind address.
+   * **Graphical interface (Tkinter):**
      * Windows: double-click the packaged `dist/ExileCraft.exe` (see the next section to build it) or run `py main.py` from Command Prompt/PowerShell.
      * macOS/Linux: run `./run_app.sh` (add execute permission once with `chmod +x run_app.sh` if needed) or call `python3 main.py` directly.
    * **Console interface (optional):**
@@ -64,9 +69,9 @@ If you see `'pip' is not recognized` on Windows, using `py -m pip ...` (or `pyth
      * macOS/Linux: run `./run_cli.sh` or `python3 main.py --cli`.
 
 4. **Build your item**
-   * In the GUI, pick a base from the left column to review its tags, influence, and crafting tips.
-  * Browse compatible affixes (or toggle the checkbox to explore every mod). Each entry shows its stat text, spawn weighting snippet, and alteration odds, so you can compare options before committing. Double-click to add them to your prefix/suffix wishlist, then press **Generate plan**.
-  * Generated plans now start with a checklist you can tick off in-game, followed by step-by-step instructions that call out deterministic crafting options, recommended currencies, and the actual 1-in-X odds for Alteration attempts.
+   * In the browser or desktop interface, pick a base from the left column to review its tags, influence, and crafting tips.
+   * Browse compatible affixes (or toggle the checkbox to explore every mod). Each entry shows its stat text, spawn weighting snippet, and alteration odds, so you can compare options before committing. Click an affix to inspect it, then add it to your prefix/suffix wishlist and press **Generate plan**.
+   * Generated plans now start with a checklist you can tick off in-game, followed by step-by-step instructions that call out deterministic crafting options, recommended currencies, and the actual 1-in-X odds for Alteration attempts.
    * Prefer the CLI? Follow the prompts to enter the numeric choices and receive the plan in stylised panels.
 
 ## Build a Windows executable

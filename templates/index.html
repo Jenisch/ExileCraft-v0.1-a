@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>ExileCraft Planner</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;600&family=Inter:wght@300;400;500;600&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="/static/styles.css" />
+  </head>
+  <body>
+    <div id="app">
+      <header class="app-header">
+        <div class="app-title">ExileCraft Planner</div>
+        <div class="app-subtitle">Data source: {{ dataset_source|e }}</div>
+      </header>
+      <div class="app-layout">
+        <aside class="panel base-panel">
+          <div class="panel-header">
+            <h2>Bases</h2>
+            <div id="base-count" class="muted">Loading…</div>
+          </div>
+          <div class="panel-body">
+            <div class="input-group">
+              <input
+                id="base-search"
+                type="search"
+                placeholder="Search bases or classes"
+                autocomplete="off"
+              />
+            </div>
+            <ul id="base-list" class="list"></ul>
+          </div>
+        </aside>
+        <main class="main-panel">
+          <section class="panel base-details">
+            <div class="panel-header">
+              <h2 id="base-name">Select a base</h2>
+              <div id="base-class" class="muted"></div>
+            </div>
+            <div class="panel-body" id="base-info">
+              <p class="muted">Choose an armour, jewellery, weapon, or off-hand base to begin.</p>
+            </div>
+          </section>
+          <section class="panel affix-panel">
+            <div class="panel-header">
+              <h2>Affix Browser</h2>
+              <div class="panel-controls">
+                <label class="checkbox">
+                  <input type="checkbox" id="compatible-toggle" checked />
+                  <span>Only show compatible</span>
+                </label>
+                <label class="checkbox">
+                  <input type="checkbox" id="bench-toggle" />
+                  <span>Include bench crafts</span>
+                </label>
+                <select id="affix-kind">
+                  <option value="">All</option>
+                  <option value="prefix">Prefixes</option>
+                  <option value="suffix">Suffixes</option>
+                </select>
+              </div>
+            </div>
+            <div class="panel-body">
+              <div class="input-group">
+                <input
+                  id="affix-search"
+                  type="search"
+                  placeholder="Search affixes, stats, or acquisition"
+                  autocomplete="off"
+                />
+              </div>
+              <div class="affix-layout">
+                <div class="affix-table-wrapper">
+                  <table class="affix-table">
+                    <thead>
+                      <tr>
+                        <th>Name</th>
+                        <th class="col-type">Type</th>
+                        <th class="col-ilvl">iLvl</th>
+                        <th>Effect</th>
+                        <th class="col-chance">Odds</th>
+                      </tr>
+                    </thead>
+                    <tbody id="affix-rows"></tbody>
+                  </table>
+                </div>
+                <div class="affix-details" id="affix-details">
+                  <h3>No affix selected</h3>
+                  <p class="muted">Choose an affix from the table to see details and add it to your wishlist.</p>
+                </div>
+              </div>
+              <div class="affix-actions">
+                <button id="add-prefix" disabled>Add as prefix</button>
+                <button id="add-suffix" disabled>Add as suffix</button>
+              </div>
+            </div>
+          </section>
+          <section class="panel selection-panel">
+            <div class="panel-body selection-body">
+              <div class="wishlist">
+                <h3>Target prefixes</h3>
+                <ul id="prefix-list" class="chip-list"></ul>
+              </div>
+              <div class="wishlist">
+                <h3>Target suffixes</h3>
+                <ul id="suffix-list" class="chip-list"></ul>
+              </div>
+              <div class="planner-controls">
+                <button id="generate-plan" disabled>Generate plan</button>
+              </div>
+              <div class="plan-output" id="plan-output">
+                <p class="muted">Add prefixes and suffixes, then generate an in-game plan.</p>
+              </div>
+            </div>
+          </section>
+        </main>
+      </div>
+    </div>
+    <template id="plan-step-template">
+      <div class="plan-step">
+        <div class="plan-step-title"></div>
+        <div class="plan-step-body"></div>
+      </div>
+    </template>
+    <div id="toast" class="toast" hidden></div>
+    <script type="module" src="/static/app.js"></script>
+  </body>
+</html>
