@@ -1,0 +1,665 @@
+:root {
+  color-scheme: dark;
+  --bg: #080605;
+  --bg-alt: rgba(28, 22, 18, 0.88);
+  --panel: rgba(36, 28, 22, 0.95);
+  --panel-border: rgba(209, 162, 77, 0.35);
+  --panel-glow: rgba(209, 162, 77, 0.08);
+  --text: #f2e7c9;
+  --muted: #c4b899;
+  --accent: #d7a64a;
+  --accent-strong: #f5c96b;
+  --danger: #f1765a;
+  --shadow: rgba(0, 0, 0, 0.45);
+  font-family: "Montserrat", sans-serif;
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+body.poe-body {
+  margin: 0;
+  min-height: 100vh;
+  background: radial-gradient(circle at top, #2d211a, #0a0604 62%, #030201 100%);
+  color: var(--text);
+  font-family: "Montserrat", sans-serif;
+  line-height: 1.5;
+}
+
+.background-texture {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  background-image: url("https://www.craftofexile.com/images/ui/bg_texture.png"),
+    linear-gradient(180deg, rgba(0, 0, 0, 0) 0%, rgba(0, 0, 0, 0.6) 100%);
+  background-size: 512px, cover;
+  background-repeat: repeat, no-repeat;
+  opacity: 0.12;
+  z-index: 0;
+}
+
+.top-nav {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  background: linear-gradient(180deg, rgba(12, 9, 7, 0.95) 0%, rgba(12, 9, 7, 0.85) 100%);
+  border-bottom: 1px solid var(--panel-border);
+  box-shadow: 0 12px 24px rgba(0, 0, 0, 0.45);
+  backdrop-filter: blur(6px);
+}
+
+.nav-inner {
+  max-width: 1440px;
+  margin: 0 auto;
+  padding: 18px 40px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 32px;
+}
+
+.logo {
+  display: flex;
+  flex-direction: column;
+  line-height: 1.1;
+}
+
+.logo .brand {
+  font-family: "Cinzel", serif;
+  font-weight: 700;
+  font-size: 1.5rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.logo .tagline {
+  font-size: 0.75rem;
+  color: var(--muted);
+  letter-spacing: 0.2em;
+}
+
+.nav-links {
+  display: flex;
+  gap: 18px;
+  align-items: center;
+}
+
+.nav-links a {
+  position: relative;
+  font-weight: 500;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  text-decoration: none;
+  color: var(--muted);
+  padding-bottom: 4px;
+  transition: color 0.2s ease;
+}
+
+.nav-links a::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  bottom: 0;
+  width: 0;
+  height: 2px;
+  background: var(--accent);
+  transition: width 0.2s ease;
+}
+
+.nav-links a:hover,
+.nav-links a:focus {
+  color: var(--accent-strong);
+}
+
+.nav-links a:hover::after,
+.nav-links a:focus::after,
+.nav-links a.active::after {
+  width: 100%;
+}
+
+.nav-links a.active {
+  color: var(--accent-strong);
+}
+
+.nav-meta {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.badge {
+  font-size: 0.8rem;
+  padding: 6px 12px;
+  border: 1px solid var(--panel-border);
+  border-radius: 999px;
+  background: rgba(209, 162, 77, 0.18);
+  box-shadow: inset 0 0 12px rgba(209, 162, 77, 0.15);
+}
+
+.ghost-btn {
+  padding: 8px 16px;
+  background: transparent;
+  border: 1px solid var(--panel-border);
+  border-radius: 999px;
+  color: var(--accent-strong);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s ease, border-color 0.2s ease;
+}
+
+.ghost-btn:hover,
+.ghost-btn:focus {
+  background: rgba(209, 162, 77, 0.12);
+  border-color: var(--accent);
+}
+
+.app-shell {
+  position: relative;
+  z-index: 1;
+  max-width: 1440px;
+  margin: 0 auto;
+  padding: 32px 40px 72px;
+}
+
+.workspace {
+  display: grid;
+  gap: 24px;
+  grid-template-columns: 320px 1fr 460px;
+  align-items: start;
+}
+
+.column {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.card {
+  background: var(--panel);
+  border: 1px solid var(--panel-border);
+  border-radius: 18px;
+  box-shadow: 0 20px 40px var(--shadow);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+
+.card-header {
+  padding: 18px 24px 16px;
+  background: linear-gradient(180deg, rgba(209, 162, 77, 0.24), rgba(209, 162, 77, 0));
+  border-bottom: 1px solid var(--panel-border);
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  align-items: center;
+}
+
+.card-header h2 {
+  margin: 0;
+  font-family: "Cinzel", serif;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+.card-body {
+  padding: 20px 24px 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  overflow: hidden;
+}
+
+.card-body p {
+  margin: 0;
+}
+
+.filters {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.filter-pill {
+  padding: 6px 10px;
+  border-radius: 999px;
+  background: rgba(0, 0, 0, 0.35);
+  border: 1px solid rgba(209, 162, 77, 0.25);
+  color: var(--muted);
+  font-size: 0.75rem;
+  letter-spacing: 0.04em;
+}
+
+.muted {
+  color: var(--muted);
+  font-size: 0.85rem;
+}
+
+.input-group {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+input[type="search"],
+select,
+button {
+  font: inherit;
+  border-radius: 12px;
+  border: 1px solid rgba(209, 162, 77, 0.28);
+  background: rgba(20, 15, 12, 0.85);
+  color: var(--text);
+  padding: 10px 14px;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease, background 0.2s ease;
+}
+
+input[type="search"]::placeholder {
+  color: rgba(244, 226, 199, 0.4);
+}
+
+input[type="search"]:focus,
+select:focus,
+button:focus {
+  outline: none;
+  border-color: var(--accent-strong);
+  box-shadow: 0 0 0 2px rgba(209, 162, 77, 0.18);
+}
+
+button {
+  cursor: pointer;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  font-weight: 600;
+  background: linear-gradient(180deg, rgba(209, 162, 77, 0.35), rgba(209, 162, 77, 0.12));
+}
+
+button:disabled {
+  cursor: not-allowed;
+  opacity: 0.45;
+  background: rgba(40, 32, 26, 0.7);
+}
+
+.base-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  max-height: 540px;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.base-list li {
+  background: rgba(18, 14, 11, 0.75);
+  border: 1px solid rgba(209, 162, 77, 0.15);
+  border-radius: 14px;
+  padding: 12px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  cursor: pointer;
+  transition: border-color 0.2s ease, transform 0.2s ease, background 0.2s ease;
+}
+
+.base-list li:hover {
+  border-color: var(--accent);
+  transform: translateY(-2px);
+}
+
+.base-list li.active {
+  border-color: var(--accent-strong);
+  box-shadow: 0 6px 18px rgba(209, 162, 77, 0.2);
+  background: rgba(209, 162, 77, 0.08);
+}
+
+.base-list li .muted {
+  font-size: 0.78rem;
+  letter-spacing: 0.04em;
+}
+
+.tag-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.tag-chip {
+  font-size: 0.7rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  padding: 4px 8px;
+  border-radius: 999px;
+  background: rgba(209, 162, 77, 0.16);
+  border: 1px solid rgba(209, 162, 77, 0.18);
+  color: var(--muted);
+}
+
+.tag-chip-more {
+  background: rgba(209, 162, 77, 0.28);
+  color: var(--text);
+}
+
+.card-base-details .card-body {
+  gap: 12px;
+}
+
+.card-base-details ul {
+  margin: 0;
+  padding-left: 18px;
+}
+
+.checkbox {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.85rem;
+  cursor: pointer;
+}
+
+.checkbox input {
+  width: 18px;
+  height: 18px;
+}
+
+.toggle-group {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.toggle-group select {
+  min-width: 140px;
+}
+
+.affix-body {
+  gap: 18px;
+}
+
+.affix-layout {
+  display: grid;
+  grid-template-columns: 1fr 260px;
+  gap: 16px;
+  align-items: start;
+}
+
+.affix-table-wrapper {
+  max-height: 420px;
+  overflow: auto;
+  border-radius: 12px;
+  border: 1px solid rgba(209, 162, 77, 0.18);
+  background: rgba(16, 12, 10, 0.85);
+}
+
+.affix-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.85rem;
+}
+
+.affix-table thead {
+  background: rgba(209, 162, 77, 0.18);
+  position: sticky;
+  top: 0;
+  z-index: 1;
+}
+
+.affix-table th,
+.affix-table td {
+  padding: 10px 12px;
+  border-bottom: 1px solid rgba(209, 162, 77, 0.1);
+  text-align: left;
+}
+
+.affix-table tbody tr {
+  cursor: pointer;
+  transition: background 0.2s ease;
+}
+
+.affix-table tbody tr:hover {
+  background: rgba(209, 162, 77, 0.12);
+}
+
+.affix-table tbody tr.active {
+  background: rgba(209, 162, 77, 0.22);
+}
+
+.affix-table .col-type {
+  width: 80px;
+  text-transform: uppercase;
+  font-weight: 600;
+}
+
+.affix-table .col-ilvl {
+  width: 60px;
+}
+
+.affix-table .col-chance {
+  width: 90px;
+  text-align: right;
+}
+
+.affix-details {
+  background: rgba(16, 12, 10, 0.85);
+  border: 1px solid rgba(209, 162, 77, 0.22);
+  border-radius: 14px;
+  padding: 16px 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  min-height: 0;
+}
+
+.affix-details h3 {
+  margin: 0;
+  font-family: "Cinzel", serif;
+  text-transform: uppercase;
+  font-size: 1rem;
+}
+
+.affix-details h4 {
+  margin: 0;
+  font-size: 0.85rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--accent-strong);
+}
+
+.affix-details ul {
+  margin: 0;
+  padding-left: 18px;
+}
+
+.affix-actions {
+  display: flex;
+  gap: 12px;
+  justify-content: flex-end;
+}
+
+.selection-body {
+  flex-direction: row;
+  gap: 24px;
+}
+
+.selection-body .wishlist {
+  flex: 1;
+  background: rgba(18, 14, 11, 0.65);
+  border: 1px solid rgba(209, 162, 77, 0.15);
+  border-radius: 14px;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.selection-body h3 {
+  margin: 0;
+  font-size: 0.95rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.chip-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 12px;
+  border-radius: 999px;
+  background: rgba(209, 162, 77, 0.18);
+  color: var(--text);
+  font-size: 0.8rem;
+}
+
+.chip button {
+  border: none;
+  background: transparent;
+  color: var(--accent-strong);
+  font-size: 0.9rem;
+  padding: 0;
+  line-height: 1;
+}
+
+.card-plan .card-body {
+  max-height: 360px;
+  overflow-y: auto;
+  gap: 18px;
+}
+
+.plan-step {
+  background: rgba(18, 14, 11, 0.7);
+  border: 1px solid rgba(209, 162, 77, 0.16);
+  border-radius: 14px;
+  padding: 16px 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.plan-step-title {
+  font-family: "Cinzel", serif;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--accent-strong);
+}
+
+.plan-step-body {
+  color: var(--muted);
+  font-size: 0.9rem;
+}
+
+.toast {
+  position: fixed;
+  bottom: 24px;
+  right: 24px;
+  background: rgba(30, 24, 20, 0.94);
+  border: 1px solid rgba(209, 162, 77, 0.4);
+  border-radius: 12px;
+  padding: 14px 18px;
+  box-shadow: 0 16px 32px rgba(0, 0, 0, 0.35);
+  z-index: 15;
+}
+
+.app-footer {
+  position: relative;
+  z-index: 1;
+  margin-top: 48px;
+  border-top: 1px solid var(--panel-border);
+  background: linear-gradient(180deg, rgba(12, 9, 7, 0.7), rgba(12, 9, 7, 0.9));
+}
+
+.footer-inner {
+  max-width: 1440px;
+  margin: 0 auto;
+  padding: 18px 40px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16px;
+  font-size: 0.85rem;
+}
+
+.footer-inner a {
+  color: var(--accent-strong);
+  text-decoration: none;
+  margin-left: 16px;
+}
+
+.footer-inner a:hover {
+  text-decoration: underline;
+}
+
+.links {
+  display: flex;
+  align-items: center;
+}
+
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+
+::-webkit-scrollbar-track {
+  background: rgba(0, 0, 0, 0.35);
+  border-radius: 999px;
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(209, 162, 77, 0.4);
+  border-radius: 999px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(209, 162, 77, 0.55);
+}
+
+@media (max-width: 1280px) {
+  .workspace {
+    grid-template-columns: 320px 1fr;
+  }
+
+  .column-right {
+    grid-column: span 2;
+  }
+
+  .affix-layout {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 960px) {
+  .nav-inner {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .workspace {
+    grid-template-columns: 1fr;
+  }
+
+  .column {
+    width: 100%;
+  }
+
+  .affix-layout {
+    grid-template-columns: 1fr;
+  }
+
+  .selection-body {
+    flex-direction: column;
+  }
+}

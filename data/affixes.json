@@ -1,0 +1,299 @@
+{
+  "bases": [
+    {
+      "name": "Fossilised Spirit Shield",
+      "item_class": "Shield",
+      "tags": [
+        "caster",
+        "energy_shield",
+        "shield"
+      ],
+      "influence": [
+        "Shaper"
+      ],
+      "notes": "Popular caster base for spell-focused shields due to high energy shield.",
+      "craft_tips": [
+        "Use Perfect Fossils to target 28%+ quality before beginning expensive attempts.",
+        "Consider Hillock in Research for 28% quality or higher if you have Betrayal safehouse access.",
+        "Apply 4-socket recipe in Delve to enable Fossil crafting setups."
+      ]
+    },
+    {
+      "name": "Vaal Regalia",
+      "item_class": "Body Armour",
+      "tags": [
+        "caster",
+        "energy_shield",
+        "body_armour"
+      ],
+      "influence": [],
+      "notes": "High ES base commonly used for endgame casters.",
+      "craft_tips": [
+        "Use Dense Fossils to scale pure ES rolls if not chasing specific influenced modifiers.",
+        "Bench craft +% Quality (Armourer's) after finishing prefixes.",
+        "Keep an open suffix for crafting % increased Energy Shield or +attributes."
+      ]
+    }
+  ],
+  "affixes": [
+    {
+      "name": "+1 to Level of all Spell Skill Gems",
+      "type": "prefix",
+      "item_classes": [
+        "Shield",
+        "Body Armour"
+      ],
+      "required_tags": [
+        "caster"
+      ],
+      "level": 75,
+      "methods": [
+        "Influence-specific: Shaper or Crusader base required",
+        "Use Awakener's Orb to combine with another influenced modifier",
+        "Harvest Augment Caster guarantees the mod if open prefix"
+      ],
+      "notes": "One of the strongest prefixes for spell builds, very rare naturally.",
+      "spawn_weights": [
+        [
+          "shield",
+          1000
+        ],
+        [
+          "body_armour",
+          1000
+        ],
+        [
+          "caster",
+          1000
+        ],
+        [
+          "default",
+          1000
+        ]
+      ],
+      "stat_texts": [
+        "+1 to Level of all Spell Skill Gems"
+      ],
+      "stat_ranges": [
+        [
+          1,
+          1
+        ]
+      ],
+      "domain": "item"
+    },
+    {
+      "name": "+(60-74) to maximum Energy Shield",
+      "type": "prefix",
+      "item_classes": [
+        "Shield",
+        "Body Armour"
+      ],
+      "required_tags": [
+        "energy_shield"
+      ],
+      "level": 68,
+      "methods": [
+        "Delve Fossils: Dense Fossil heavily weights ES prefixes",
+        "Essence of Woe (Screaming or higher) guarantees a high tier ES roll",
+        "Bench craft as a temporary filler if crafting prefixes last"
+      ],
+      "notes": "Prioritize Dense Fossils or high-tier Essence of Woe for deterministic results.",
+      "spawn_weights": [
+        [
+          "shield",
+          1000
+        ],
+        [
+          "body_armour",
+          1000
+        ],
+        [
+          "energy_shield",
+          1000
+        ],
+        [
+          "default",
+          1000
+        ]
+      ],
+      "stat_texts": [
+        "+60-74 to maximum Energy Shield"
+      ],
+      "stat_ranges": [
+        [
+          60,
+          74
+        ]
+      ],
+      "domain": "item"
+    },
+    {
+      "name": "+(46-48)% increased Spell Damage",
+      "type": "prefix",
+      "item_classes": [
+        "Shield"
+      ],
+      "required_tags": [
+        "caster"
+      ],
+      "level": 68,
+      "methods": [
+        "Fossils: Aetheric + Metallic Fossils increase caster prefix weighting",
+        "Harvest Reforge Caster for increased odds",
+        "Alteration spam on magic shield, Regal once prefix hits"
+      ],
+      "notes": "Common prefix for caster shields, easier to obtain than gem level mods.",
+      "spawn_weights": [
+        [
+          "shield",
+          1000
+        ],
+        [
+          "caster",
+          1000
+        ],
+        [
+          "default",
+          1000
+        ]
+      ],
+      "stat_texts": [
+        "+46-48% increased Spell Damage"
+      ],
+      "stat_ranges": [
+        [
+          46,
+          48
+        ]
+      ],
+      "domain": "item"
+    },
+    {
+      "name": "+(35-37)% increased Effect of Non-Damaging Ailments",
+      "type": "suffix",
+      "item_classes": [
+        "Shield",
+        "Body Armour"
+      ],
+      "required_tags": [
+        "caster"
+      ],
+      "level": 72,
+      "methods": [
+        "Harvest Augment Caster adds the mod when suffix open",
+        "Harvest Reforge Caster with suffixes cannot be changed to target",
+        "Fossils: Frigid + Metallic can roll it on appropriate bases"
+      ],
+      "notes": "Synergises with builds that rely on chill, shock, or brittle effects.",
+      "spawn_weights": [
+        [
+          "shield",
+          1000
+        ],
+        [
+          "body_armour",
+          1000
+        ],
+        [
+          "caster",
+          1000
+        ],
+        [
+          "default",
+          1000
+        ]
+      ],
+      "stat_texts": [
+        "+35-37% increased Effect of Non-Damaging Ailments"
+      ],
+      "stat_ranges": [
+        [
+          35,
+          37
+        ]
+      ],
+      "domain": "item"
+    },
+    {
+      "name": "+(38-42)% to Lightning Resistance",
+      "type": "suffix",
+      "item_classes": [
+        "Shield",
+        "Body Armour"
+      ],
+      "required_tags": [],
+      "level": 60,
+      "methods": [
+        "Harvest Reforge Chaos/Defence keeps the Lightning Resistance suffix",
+        "Bench craft until better resist is found",
+        "Essence of Wrath guarantees a Lightning Resistance suffix"
+      ],
+      "notes": "Use the crafting bench as a stopgap if chasing more premium suffixes.",
+      "spawn_weights": [
+        [
+          "shield",
+          1000
+        ],
+        [
+          "body_armour",
+          1000
+        ],
+        [
+          "default",
+          1000
+        ]
+      ],
+      "stat_texts": [
+        "+38-42% to Lightning Resistance"
+      ],
+      "stat_ranges": [
+        [
+          38,
+          42
+        ]
+      ],
+      "domain": "item"
+    },
+    {
+      "name": "+(17-19)% chance to Avoid Elemental Ailments",
+      "type": "suffix",
+      "item_classes": [
+        "Shield",
+        "Body Armour"
+      ],
+      "required_tags": [],
+      "level": 75,
+      "methods": [
+        "Harvest Augment Defence adds the mod if open suffix",
+        "Eldritch Ichor (Searing Exarch) implicit can roll similar effect",
+        "Veiled modifier from Betrayal (Aisling) upgraded for higher values"
+      ],
+      "notes": "Pair with other ailment avoidance sources to reach 100%.",
+      "spawn_weights": [
+        [
+          "shield",
+          1000
+        ],
+        [
+          "body_armour",
+          1000
+        ],
+        [
+          "default",
+          1000
+        ]
+      ],
+      "stat_texts": [
+        "+17-19% chance to Avoid Elemental Ailments"
+      ],
+      "stat_ranges": [
+        [
+          17,
+          19
+        ]
+      ],
+      "domain": "item"
+    }
+  ]
+}
