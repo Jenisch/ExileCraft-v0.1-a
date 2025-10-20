@@ -52,7 +52,18 @@ def main(argv: list[str] | None = None) -> None:
         return
 
     if args.web:
-        from web_app import create_app
+        try:
+            from web_app import create_app
+        except ModuleNotFoundError as exc:
+            if exc.name == "flask":
+                print(
+                    "Flask is required to launch the web interface. Install it with "
+                    "`py -m pip install -r requirements.txt` on Windows or "
+                    "`python3 -m pip install -r requirements.txt` on other platforms.",
+                    file=sys.stderr,
+                )
+                sys.exit(1)
+            raise
 
         app = create_app(source=args.data_source)
         app.run(host=args.host, port=args.port, debug=False)
