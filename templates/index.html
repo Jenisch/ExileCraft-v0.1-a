@@ -3,75 +3,138 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>ExileCraft Planner</title>
+    <title>ExileCraft Emulator</title>
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
-      href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;600&family=Inter:wght@300;400;500;600&display=swap"
+      href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;700&family=Montserrat:wght@300;400;500;600&display=swap"
       rel="stylesheet"
     />
     <link rel="stylesheet" href="/static/styles.css" />
   </head>
-  <body>
-    <div id="app">
-      <header class="app-header">
-        <div class="app-title">ExileCraft Planner</div>
-        <div class="app-subtitle">Data source: {{ dataset_source|e }}</div>
-      </header>
-      <div class="app-layout">
-        <aside class="panel base-panel">
-          <div class="panel-header">
-            <h2>Bases</h2>
-            <div id="base-count" class="muted">Loading…</div>
-          </div>
-          <div class="panel-body">
-            <div class="input-group">
-              <input
-                id="base-search"
-                type="search"
-                placeholder="Search bases or classes"
-                autocomplete="off"
-              />
+  <body class="poe-body">
+    <div class="background-texture"></div>
+    <header class="top-nav">
+      <div class="nav-inner">
+        <div class="logo">
+          <span class="brand">ExileCraft</span>
+          <span class="tagline">Crafting Emulator</span>
+        </div>
+        <nav class="nav-links">
+          <a class="active" href="#">Emulator</a>
+          <a href="#">Calculator</a>
+          <a href="#">Simulator</a>
+          <a href="#">Guides</a>
+        </nav>
+        <div class="nav-meta">
+          <div id="dataset-source" class="badge">Dataset: {{ dataset_source|e }}</div>
+          <button id="reset-filters" class="ghost-btn" type="button">Reset session</button>
+        </div>
+      </div>
+    </header>
+    <main id="app" class="app-shell">
+      <div class="workspace">
+        <section class="column column-left">
+          <div class="card card-search">
+            <header class="card-header">
+              <div>
+                <h2>Base Library</h2>
+                <p id="base-count" class="muted">Loading…</p>
+              </div>
+              <div class="filters">
+                <span class="filter-pill">Armour</span>
+                <span class="filter-pill">Weapons</span>
+                <span class="filter-pill">Jewellery</span>
+                <span class="filter-pill">Off-hand</span>
+              </div>
+            </header>
+            <div class="card-body">
+              <div class="input-group">
+                <input
+                  id="base-search"
+                  type="search"
+                  placeholder="Search by base, class, or tags"
+                  autocomplete="off"
+                />
+              </div>
+              <ul id="base-list" class="base-list list"></ul>
             </div>
-            <ul id="base-list" class="list"></ul>
           </div>
-        </aside>
-        <main class="main-panel">
-          <section class="panel base-details">
-            <div class="panel-header">
-              <h2 id="base-name">Select a base</h2>
-              <div id="base-class" class="muted"></div>
-            </div>
-            <div class="panel-body" id="base-info">
+        </section>
+        <section class="column column-center">
+          <div class="card card-base-details">
+            <header class="card-header">
+              <div>
+                <h2 id="base-name">Select a base</h2>
+                <p id="base-class" class="muted"></p>
+              </div>
+            </header>
+            <div class="card-body" id="base-info">
               <p class="muted">Choose an armour, jewellery, weapon, or off-hand base to begin.</p>
             </div>
-          </section>
-          <section class="panel affix-panel">
-            <div class="panel-header">
-              <h2>Affix Browser</h2>
-              <div class="panel-controls">
+          </div>
+          <div class="card card-selection">
+            <header class="card-header">
+              <div>
+                <h2>Target Affixes</h2>
+                <p class="muted">Build your wishlist before generating a plan.</p>
+              </div>
+              <button id="generate-plan" type="button" disabled>Generate plan</button>
+            </header>
+            <div class="card-body selection-body">
+              <div class="wishlist">
+                <h3>Prefixes</h3>
+                <ul id="prefix-list" class="chip-list"></ul>
+              </div>
+              <div class="wishlist">
+                <h3>Suffixes</h3>
+                <ul id="suffix-list" class="chip-list"></ul>
+              </div>
+            </div>
+          </div>
+          <div class="card card-plan">
+            <header class="card-header">
+              <div>
+                <h2>Crafting Walkthrough</h2>
+                <p class="muted">Step-by-step guidance inspired by in-game methods.</p>
+              </div>
+            </header>
+            <div class="card-body" id="plan-output">
+              <p class="muted">Add prefixes and suffixes, then generate an in-game plan.</p>
+            </div>
+          </div>
+        </section>
+        <section class="column column-right">
+          <div class="card card-affixes">
+            <header class="card-header">
+              <div>
+                <h2>Affix Browser</h2>
+                <p id="affix-count" class="muted">—</p>
+              </div>
+              <div class="toggle-group">
                 <label class="checkbox">
-                  <input type="checkbox" id="compatible-toggle" checked />
+                  <input type="checkbox" id="compatible-toggle" checked disabled />
                   <span>Only show compatible</span>
                 </label>
                 <label class="checkbox">
-                  <input type="checkbox" id="bench-toggle" />
+                  <input type="checkbox" id="bench-toggle" disabled />
                   <span>Include bench crafts</span>
                 </label>
-                <select id="affix-kind">
-                  <option value="">All</option>
+                <select id="affix-kind" disabled>
+                  <option value="">All mods</option>
                   <option value="prefix">Prefixes</option>
                   <option value="suffix">Suffixes</option>
                 </select>
               </div>
-            </div>
-            <div class="panel-body">
+            </header>
+            <div class="card-body affix-body">
               <div class="input-group">
                 <input
                   id="affix-search"
                   type="search"
-                  placeholder="Search affixes, stats, or acquisition"
+                  placeholder="Search names, stats, or acquisition"
                   autocomplete="off"
+                  disabled
                 />
               </div>
               <div class="affix-layout">
@@ -89,38 +152,29 @@
                     <tbody id="affix-rows"></tbody>
                   </table>
                 </div>
-                <div class="affix-details" id="affix-details">
+                <aside class="affix-details" id="affix-details">
                   <h3>No affix selected</h3>
                   <p class="muted">Choose an affix from the table to see details and add it to your wishlist.</p>
-                </div>
+                </aside>
               </div>
               <div class="affix-actions">
-                <button id="add-prefix" disabled>Add as prefix</button>
-                <button id="add-suffix" disabled>Add as suffix</button>
+                <button id="add-prefix" type="button" disabled>Add as prefix</button>
+                <button id="add-suffix" type="button" disabled>Add as suffix</button>
               </div>
             </div>
-          </section>
-          <section class="panel selection-panel">
-            <div class="panel-body selection-body">
-              <div class="wishlist">
-                <h3>Target prefixes</h3>
-                <ul id="prefix-list" class="chip-list"></ul>
-              </div>
-              <div class="wishlist">
-                <h3>Target suffixes</h3>
-                <ul id="suffix-list" class="chip-list"></ul>
-              </div>
-              <div class="planner-controls">
-                <button id="generate-plan" disabled>Generate plan</button>
-              </div>
-              <div class="plan-output" id="plan-output">
-                <p class="muted">Add prefixes and suffixes, then generate an in-game plan.</p>
-              </div>
-            </div>
-          </section>
-        </main>
+          </div>
+        </section>
       </div>
-    </div>
+    </main>
+    <footer class="app-footer">
+      <div class="footer-inner">
+        <div class="disclaimer">Crafting data provided for educational use. Inspired by Craft of Exile.</div>
+        <div class="links">
+          <a href="https://www.pathofexile.com/" target="_blank" rel="noreferrer">Official Site</a>
+          <a href="https://www.craftofexile.com/" target="_blank" rel="noreferrer">Craft of Exile</a>
+        </div>
+      </div>
+    </footer>
     <template id="plan-step-template">
       <div class="plan-step">
         <div class="plan-step-title"></div>

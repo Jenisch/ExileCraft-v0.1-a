@@ -22,6 +22,7 @@ const baseInfoEl = document.querySelector("#base-info");
 const affixRowsEl = document.querySelector("#affix-rows");
 const affixSearchEl = document.querySelector("#affix-search");
 const affixKindEl = document.querySelector("#affix-kind");
+const affixCountEl = document.querySelector("#affix-count");
 const compatibleToggleEl = document.querySelector("#compatible-toggle");
 const benchToggleEl = document.querySelector("#bench-toggle");
 const affixDetailsEl = document.querySelector("#affix-details");
@@ -33,6 +34,7 @@ const generatePlanEl = document.querySelector("#generate-plan");
 const planOutputEl = document.querySelector("#plan-output");
 const toastEl = document.querySelector("#toast");
 const planTemplate = document.querySelector("#plan-step-template");
+const resetFiltersEl = document.querySelector("#reset-filters");
 
 async function fetchJSON(url, options) {
   const response = await fetch(url, options);
@@ -85,6 +87,23 @@ function renderBaseList() {
     meta.classList.add("muted");
     meta.textContent = base.itemClass;
     li.append(name, meta);
+    if (base.tags && base.tags.length) {
+      const tagRow = document.createElement("div");
+      tagRow.classList.add("tag-row");
+      base.tags.slice(0, 6).forEach((tag) => {
+        const tagChip = document.createElement("span");
+        tagChip.classList.add("tag-chip");
+        tagChip.textContent = tag.replace(/_/g, " ");
+        tagRow.appendChild(tagChip);
+      });
+      if (base.tags.length > 6) {
+        const extra = document.createElement("span");
+        extra.classList.add("tag-chip", "tag-chip-more");
+        extra.textContent = `+${base.tags.length - 6}`;
+        tagRow.appendChild(extra);
+      }
+      li.appendChild(tagRow);
+    }
     if (base.id === state.selectedBaseId) {
       li.classList.add("active");
     }
@@ -151,6 +170,10 @@ async function selectBase(baseId) {
   }
   compatibleToggleEl.disabled = false;
   benchToggleEl.disabled = false;
+  affixKindEl.disabled = false;
+  affixKindEl.value = state.affixKind;
+  affixSearchEl.disabled = false;
+  affixSearchEl.value = state.affixSearch;
   generatePlanEl.disabled = false;
   await loadAffixes();
   renderPlan();
@@ -185,7 +208,17 @@ async function loadAffixes() {
 
 function renderAffixes() {
   affixRowsEl.innerHTML = "";
+  if (affixCountEl) {
+    if (!state.selectedBaseId) {
+      affixCountEl.textContent = "Select a base to browse mods";
+    } else if (state.affixes.length) {
+      affixCountEl.textContent = `${state.affixes.length} mods shown`;
+    } else {
+      affixCountEl.textContent = "No mods match";
+    }
+  }
   if (!state.affixes.length) {
+    state.selectedAffixId = null;
     const row = document.createElement("tr");
     const cell = document.createElement("td");
     cell.colSpan = 5;
@@ -193,15 +226,7 @@ function renderAffixes() {
     cell.textContent = "No affixes match the current filters.";
     row.appendChild(cell);
     affixRowsEl.appendChild(row);
-    affixDetailsEl.innerHTML = "";
-    const title = document.createElement("h3");
-    title.textContent = "No affix selected";
-    const msg = document.createElement("p");
-    msg.classList.add("muted");
-    msg.textContent = "Adjust filters or pick a different base.";
-    affixDetailsEl.append(title, msg);
-    addPrefixEl.disabled = true;
-    addSuffixEl.disabled = true;
+    renderEmptyAffixDetails("Adjust filters or pick a different base.");
     return;
   }
   state.affixes.forEach((affix) => {
@@ -242,12 +267,7 @@ function selectAffix(affixId) {
   });
   const affix = state.affixes.find((item) => item.id === affixId);
   if (!affix) {
-    affixDetailsEl.innerHTML = "";
-    const title = document.createElement("h3");
-    title.textContent = "No affix selected";
-    affixDetailsEl.append(title);
-    addPrefixEl.disabled = true;
-    addSuffixEl.disabled = true;
+    renderEmptyAffixDetails();
     return;
   }
   addPrefixEl.disabled = false;
@@ -432,6 +452,51 @@ function debounceAffixSearch(value) {
   }, 250);
 }
 
+function renderEmptyAffixDetails(message = "Select a mod to inspect details.") {
+  affixDetailsEl.innerHTML = "";
+  const title = document.createElement("h3");
+  title.textContent = "No affix selected";
+  const msg = document.createElement("p");
+  msg.classList.add("muted");
+  msg.textContent = message;
+  affixDetailsEl.append(title, msg);
+  addPrefixEl.disabled = true;
+  addSuffixEl.disabled = true;
+}
+
+function resetFilters() {
+  state.selectedBaseId = null;
+  state.selectedAffixId = null;
+  state.prefixes = [];
+  state.suffixes = [];
+  state.affixSearch = "";
+  state.affixKind = "";
+  state.onlyCompatible = true;
+  state.includeBench = false;
+  baseSearchEl.value = "";
+  affixSearchEl.value = "";
+  affixSearchEl.disabled = true;
+  affixKindEl.value = "";
+  affixKindEl.disabled = true;
+  compatibleToggleEl.checked = true;
+  compatibleToggleEl.disabled = true;
+  benchToggleEl.checked = false;
+  benchToggleEl.disabled = true;
+  generatePlanEl.disabled = true;
+  addPrefixEl.disabled = true;
+  addSuffixEl.disabled = true;
+  baseNameEl.textContent = "Select a base";
+  baseClassEl.textContent = "";
+  baseInfoEl.innerHTML = '<p class="muted">Choose an armour, jewellery, weapon, or off-hand base to begin.</p>';
+  renderEmptyAffixDetails("Pick a base to unlock compatible mods.");
+  renderWishlist();
+  renderPlan();
+  filterBases("");
+  renderBaseList();
+  state.affixes = [];
+  renderAffixes();
+}
+
 baseSearchEl.addEventListener("input", (event) => {
   filterBases(event.target.value.trim());
   renderBaseList();
@@ -461,8 +526,15 @@ addSuffixEl.addEventListener("click", () => addAffix("suffix"));
 
 generatePlanEl.addEventListener("click", generatePlan);
 
+resetFiltersEl?.addEventListener("click", () => {
+  showToast("Session reset. Start by selecting a base.");
+  resetFilters();
+});
+
 window.addEventListener("DOMContentLoaded", async () => {
   compatibleToggleEl.disabled = true;
   benchToggleEl.disabled = true;
+  affixKindEl.disabled = true;
+  affixSearchEl.disabled = true;
   await Promise.all([loadMeta(), loadBases()]);
 });
