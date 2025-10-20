@@ -11,7 +11,14 @@ if %errorlevel%==0 (
 )
 
 %EXILECRAFT_PY% main.py --web %*
-echo.
-echo The server is running. Open http://127.0.0.1:5000/ in your browser.
-echo Press Ctrl+C in this window to stop the server.
+if errorlevel 1 (
+    echo.
+    echo Failed to start the ExileCraft web interface. Ensure the dependencies are installed with^:
+    echo     py -m pip install -r requirements.txt
+    echo After installing, run this script again.
+) else (
+    echo.
+    echo The server is running. Open http://127.0.0.1:5000/ in your browser.
+    echo Press Ctrl+C in this window to stop the server.
+)
 pause >nul
